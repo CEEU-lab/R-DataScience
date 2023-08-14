@@ -1,0 +1,180 @@
+---
+title: "Introducción al lenguaje R"
+subtitle: "Looping functions"
+output: html_notebook
+---
+
+La función apply y sus variantes sirven to manipulate slices of data in the form of matrices, arrays, lists or dataframes in a repetitive way, allowing to cross or traverse the data and avoiding explicit use of loop constructs. 
+
+The functions act on an input matrix or array and apply a chosen named function with one or several optional arguments.
+
+
+### 1. apply()
+You want to apply a given function to the rows (index “1”) or columns (index “2”) of a matrix or dataframe. 
+
+`apply(X, MARGIN, FUN, ...)`
+
+* X is an array or a matrix if the dimension of the array is 2;
+* MARGIN is a variable defining how the function is applied: when MARGIN=1, it applies over rows, whereas with MARGIN=2, it works over columns. Note that when you use the construct MARGIN=c(1,2), it applies to both rows and columns; and
+* FUN, which is the function that you want to apply to the data. It can be any R function, including a User Defined Function (UDF).
+
+```{r ECHO=TRUE}
+mymat <- matrix(rep(seq(5), 4), ncol=5)
+
+# itera la matriz en sentido de las filas
+apply(mymat,1,sum)
+
+# itera la matriz en sentido de las columnas
+apply(mymat,2,sum)
+
+# el apply también se puede usar con UDF
+apply(mymat, 1, function(x, y)
+  sum(x) + y, y=3)
+
+```
+
+The apply() functions form the basis of more complex combinations and helps to perform operations with very few lines of code. More specifically, the family is made up of the `apply()`, `lapply()`, `sapply()`, `vapply()`, `mapply()`, `rapply()`, and `tapply()` functions.
+
+### 2. lapply()
+
+You want to apply a given function to every element of a list and obtain a list as a result.
+```{r ECHO=TRUE}
+# ejemplo1
+x <- list(a= 1:5, b= rnorm(10))
+
+lapply(x,mean)
+
+#ejemplo2
+x <- 1:5
+
+# genero variables aleatorias uniformemente distribuidas a partir de cada input
+lapply(x,runif)
+
+# o bien usando argumentos de la funcion runif
+lapply(x,runif, min=2, max=8)
+```
+### 3. Combinar apply con una funcion anónima
+```{r echo=TRUE}
+# por ejemplo, para llamar a la primera columna en un listado de martices
+x <- list(a=matrix(1:4, 2, 2), b=matrix(1:6, 3, 2))
+
+# a partir de una funcion creada al vuelo
+lapply(x, function(mtx){mtx[,1]})
+
+```
+### 4. sapply()
+
+La principal diferencia entre `lapply` y `sapply` es en el tipo de valor que devuelven. En sí, `sapply` invoca a `lapply`. Pero devuelve un vector si el resultado es una lista de length == 1. Si el resultado es una lista donde cada elemento es un vector de igual largo (mayor a uno), entonces devuelve una matriz. Sino, recién ahí devuelve una lista.
+
+```{r echo=TRUE}
+
+x <- list(a=1:3,b=rnorm(8))
+lapply(x, mean)
+sapply(x,mean)
+
+```
+### 5. split()
+
+La función `split` divide los valores de una vector (u otra estructura de datos) a partir de los grupos definidos de una variable categórica (un factor, la columna de un data.frame, etc.). Así, es posible aplicar una misma función a distintas categorías de una variable para hacer comparaciones entre ellas.
+La combinación `lapply` `sapply` + `split` es bastante común. A continuación vemos cómo puede usarse con un data.frame.
+
+```{r echo=TRUE}
+library(tidyverse)
+
+# leemos el data.frame
+df <- read.csv('../data/ar_properties.csv')
+
+# subseteamos los alquileres temporales
+alquiler <- df[(df$currency %in% c('ARS','USD')) & (df$operation_type=='Alquiler temporal'),]
+s <- split(alquiler, alquiler$currency)
+
+# con structure vemos la estructura del objeto, una lista de dos data.frames
+str(s)
+
+# así accedemos al df de la primera categoria
+names(s$ARS)
+# o el de la última
+names(s$USD)
+
+# y comparamos medias de precio y superficie en pesos y dólares
+lapply(s, function(x){
+  colMeans(x[, c("price","surface_total")],
+           na.rm=TRUE)
+})
+
+# es más cómodo si lo visualizamos como matriz
+sapply(s, function(x){
+  colMeans(x[,c("price","surface_total")],
+           na.rm=TRUE)
+})
+```
+
+### 6. Atajos para operaciones con matrices y data.frames
+
+Una forma rápida de reemplazar las `rowSums`,`rowMeans`,`colSums`,`colMeans` consiste en aplicar funciones de suma o promedio teniendo en cuenta el sentido de la operación en un vector de dos dimensiones (o matriz): `1` en sentido de las filas y `2` en sentido de las columnas.
+
+```{r echo=TRUE}
+# calculamos el promedio de ambas columnas
+apply(alquiler[,c('price','surface_total')], 2, mean, na.rm=TRUE)
+
+# también podemos hacer otras operaciones, como calcular percentiles
+apply(alquiler[,c('price','surface_total')], 2, quantile, probs = c(0.25,0.75), na.rm=TRUE )
+```
+
+### 7. tapply()
+
+`tapply()` suele utilizarse para aplicar una función a los distintos subsets de un mismo vector. Es una especie de combinación entre `split` y `sapply`
+
+```{r echo=TRUE}
+# creamos un vector
+tapply(alquiler$price, alquiler$l1, mean, simplify = TRUE)
+```
+
+### 8. mapply()
+
+`mapply()` es útil para iterar sobre múltiples objetos de R en paralelo (en lugar de uno por vez como hacían los `lapply` y companía).
+```{r echo=TRUE}
+
+list(rep(1,4), rep(2,3), rep(3,2), rep(4,1))
+
+
+mapply(rep, 1:4, 4:1)
+```
+Veamos otro ejemplo simulando algunas distribuciones ...
+```{r echo=TRUE}
+
+noise <- function(n,avg,sd){
+  rnorm(n,avg,sd)
+}
+
+# simulamos 5 numeros aleatorios, o bien
+noise(5,2,1)
+
+# mapeamos noise a 5 sets distintos de n y avg que corren en paralelo
+mapply(noise, 5:1, 5:1, 2)
+```
+
+### 9. Vectorizar una función
+
+Por esto se entiende a la posibilidad de pasar vectores como argumentos a funciones que originalmente toman valores únicos. Por ejemplo,
+```{r echo=TRUE}
+
+# creamos una funcion
+sumsq <- function(mu, sigma, x){
+  sum(((x-mu)/sigma)^2)
+}
+
+# un vector de valores aleatorios
+x <- rnorm(10)
+
+# y mapeamos la funcion a distintas combinaciones de mu y sigma para los valores de x
+mapply(sumsq, 1:5, 1:5, MoreArgs = list(x = x))
+```
+
+La funcion `Vectorize()` sirve para crear una version vectorizada de una misma función
+```{r echo=TRUE}
+vsumsq <- Vectorize(sumsq, c("mu","sigma"))
+vsumsq(1:5,1:5,x)
+```
+
+Como se puede apreciar, nuestro vector `x` es utilizado en la función con distintas combinaciones de mu y sigma (las cuales se pasan tambien como secuencia de 1:5). Tanto con `mapply()` como con `Vectorize()` estamos computando la suma de los cuadrados de un vector de 10 valores aleatorios un total de 5 veces (las combinaciones de mu y sigma que decidimos probar)

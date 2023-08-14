@@ -1,0 +1,30 @@
+---
+title: "ParcticaGuiada"
+author: "PyMap"
+date: "2023-07-27"
+output: html_document
+---
+
+## TITULO DEL REPORTE
+
+Nota relevante para la interpretación de los resultados.
+
+## Visualización 1
+
+```{r echo=FALSE}
+library(ggplot2)
+data <- "load the data"
+ggplot(data, aes()) + geom_x()
+```
+
+## Visualización 2
+
+```{r echo=FALSE}
+data <- "load the data"
+ggplot(data, aes()) + geom_x()
+```
+```{r}
+install.packages("sf")
+library(sf)
+```
+

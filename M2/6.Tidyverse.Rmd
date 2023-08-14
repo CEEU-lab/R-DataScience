@@ -1,0 +1,204 @@
+---
+title: "Introducción al lenguaje R"
+subtitle: "Tidyverse: lectura, manipulación y transformación de bases de datos"
+output: html_notebook
+---
+
+<br>
+
+### 1. Tidyverse
+
+Es una colección de paquetes, cada uno para cubrir distinto tipo de necesidades en un flujo de trabajo con datos.
+
+<br> \> **{readr}** y **{magrittr}**
+
+Para leer un dataset y encadenar operaciones. El %\>% es una forma particular del enfoque tidy.
+
+```{r ECHO=TRUE}
+library(tidyverse)
+
+#readr
+df <- read_csv('../data/ar_properties.csv', col_names=TRUE)
+
+# cuanta memoria RAM necesitamos para levantarlo?
+memory_usage <- function(nrows, ncols){
+  bytes <-  nrows * ncols * 8
+  mb <- bytes/2^20
+  gb <- round(mb/100,2)
+  usage <- sprintf("%s Gb de RAM para un dataset de %s filas y %s columnas",gb,nrows,ncols)
+  return(usage)
+}
+
+memory_usage(nrows=dim(df)[1], ncols=dim(df)[2])
+
+# una forma rapida de conocer la clase de objeto que contiene cada columna
+sapply(df, class)
+
+# magrittr
+# sin PIPE
+round(prop.table(table(df$l1)), digits=2)
+
+# con PIPE
+df$l1 %>% table() %>% prop.table() %>% round(digits=2)
+```
+
+<br>
+
+#### 2.1. Funciones de deployr
+
+> **select()**
+
+Para selección de columnas.
+
+```{r ECHO=FALSE}
+
+# tambien puede ser con int, slicing, etc - e.g. select(1:3)
+df_select <- df %>% select(l1,l2,l3) 
+colnames(df_select)
+
+# o sino con start/ends with y contains
+df %>% select(starts_with("l"))
+df %>% select(contains("lat"))
+```
+
+> **filter()**
+
+Para quedarnos con casos que cumplan determinadas condiciones.
+
+```{r ECHO=TRUE}
+df_filter <-  df %>% filter(df$l1=="Argentina") 
+
+# quedarme con una u otra categoria
+df_filter1 <- df %>% filter(df$l1=="Argentina" | df$l1=="Uruguay")
+df_filter2 <- df %>% filter(l1 %in% c("Argentina","Uruguay"))
+
+df_multif <- df %>% select(l1,l2,surface_covered,price) %>% 
+  filter(l1 == "Argentina", surface_covered >100) 
+
+df_multif
+```
+
+> **mutate()**
+
+Para crear nuevas columnas.
+
+```{r ECHO=TRUE}
+
+df %>% select(starts_with("sur")) %>% 
+  filter(df$l1=="Argentina") %>%  
+  mutate(surface_uncovered= surface_total - surface_covered)
+```
+
+O recodificar variables existentes.
+
+```{r ECHO=TRUE}
+# case_when: recodificacion de variables/creacion de nuevas categorias
+# Option 1
+df %>% select(c(surface_total,price,currency)) %>% 
+  filter(df$operation_type == "Alquiler" & df$currency=="ARS") %>% 
+  mutate(rango_precios = case_when(price <= 50000 ~ "bajo",
+                                   price >50000 & price<= 80000 ~ "medio",
+                                   price >80000 ~ "alto"))
+
+# Option 2
+df %>% select(c(surface_total, price, currency)) %>% 
+  filter(df$operation_type == "Alquiler" & df$currency == "ARS") %>%
+  mutate(sup_rango = case_when(surface_total %in% (0:35)~"chico",
+                               surface_total %in% (36:52)~"mediano",
+                               surface_total > 52~"grande"))
+
+# ifelse: reemplazar valores de columnas de un data.frame
+df %>% 
+  mutate(currency=ifelse(currency == "ARG", "ARS", currency)) %>% 
+  select(currency) %>% 
+  filter(currency=="ARS")
+
+
+# así se reemplaza un valor de una serie en R base
+df$currency[which(df$currency=="ARS")] <- "ARG"
+```
+
+¿Por qué usar el which en R base?
+
+```{r}
+## Disgresión sobre NAs
+# https://stackoverflow.com/questions/19430841/na-values-in-indexing-data-frame
+df[which(df$currency=="ARG"),]
+```
+
+> **rename()**
+
+Para renombrar columnas
+
+```{r ECHO=FALSE}
+
+df %>% rename("pais"="l1")
+```
+
+> **summarise()**
+
+Para construir estadísticos de resumen.
+
+```{r ECHO=TRUE}
+
+df %>% 
+  summarise(m2_ofertados = sum(price, na.rm=TRUE),
+            precio_medio = mean(price, na.rm=TRUE),
+            precio_desvio = sd(price,na.rm=TRUE),
+            precio_cv = precio_desvio/precio_medio*100)
+
+
+```
+
+<br>
+
+> **groupby()**
+
+Muy común es la combinación ´group_by´ + ´summarise´ para obtener resultados por grupo.
+
+```{r ECHO=TRUE}
+
+df %>%
+  select(currency,price,l1) %>% 
+  filter(df$currency == "USD") %>% 
+  mutate(l1 = case_when(l1=="Estados Unidos"~"USA", TRUE ~ l1)) %>% 
+  group_by(l1) %>% 
+  summarise(avisos_totales=n(), precio_m2=mean(price)) %>% 
+  arrange(-avisos_totales)
+
+```
+
+#### 2.2. Funciones de tidyr
+
+<br>
+
+> **pivot_longer()**
+
+Para transformar columnas en filas
+
+```{r ECHO=TRUE}
+
+long_df <- df %>% select(c(l1,price)) %>% 
+              group_by(l1) %>% 
+              summarise(min_price=min(price, na.rm=TRUE),
+                        max_price=max(price, na.rm=TRUE),
+                        mean_price=mean(price, na.rm = TRUE))%>% 
+              select(l1,min_price,max_price,mean_price) %>% 
+              pivot_longer(cols = c(min_price,max_price,mean_price),
+                           names_to = "variable",
+                           values_to = "valor")
+
+long_df
+```
+
+<br> \> **pivot_wider()**
+
+Para transformar filas en columnas
+
+```{r ECHO=TRUE}
+
+long_df %>% 
+  pivot_wider(names_from="variable",
+              values_from="valor")
+
+```

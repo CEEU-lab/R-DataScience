@@ -1,0 +1,532 @@
+---
+title: "Introducción al lenguaje R"
+subtitle: "Clases de objetos y estructuras de datos"
+output: html_notebook
+---
+
+<br>
+
+### 1. Clases
+
+<br> En R base se pueden distinguir 3 tipos de clases básicas de objetos.
+
+<br>
+
+> **"Atomic" classes**
+
+```{r echo=TRUE}
+# 1. numeric (números reales)
+mi_numero <- 5
+otro_numero <- mi_numero + 150
+class(otro_numero)
+```
+
+```{r echo=TRUE}
+# 1.2. integer
+mi_int <- 5L
+class(mi_int)
+```
+
+En general, en R los números son tratados como números reales de dos decimales. Si no se especifícase con `L` el tipo de clase, el resultado hubiera sido `5.00`.
+
+También existen los números especiales, para expresiones como `Infinity`
+
+```{r echo=TRUE}
+1/0
+class(1/0)
+```
+
+o `NaN` para not a number.
+
+```{r echo=TRUE}
+0/0
+class(0/0)
+```
+
+```{r echo=TRUE}
+is.nan(0/0)
+```
+
+En R, existe otro tipo de clase numérica que permite componer un número en dos partes: los reales y los imaginarios.
+
+Estos son los `complex` o números complejos.
+
+```{r echo=TRUE}
+# 1.3. complex
+class(1+2i)
+
+# Un número complejo se compone de una parte Real
+Re(1+2i)
+
+# y una imaginaria
+Im(1+2i)
+```
+
+```{r echo=TRUE}
+# 2. character
+mi_ciudad <- "Buenos Aires"
+class(mi_ciudad)
+```
+
+```{r echo=TRUE}
+#3. logical
+4<3
+2<5
+```
+
+<br>
+
+### 2. Estructuras nativas de datos
+
+En R base, el `vector` es la colección fundamental alrededor de la que se forman otras estructuras de datos.
+
+<br>
+
+> **Vectores**
+
+`c()` de `combine` permite concatenar distintos objetos "atómicos". La principal regla de un vector es que este sólo puede contener objetos de la misma clase. Así es que contamos con vectores ...
+
+```{r echo=TRUE}
+# 1. .. de tipo character
+meses_char <- c("Enero", "Febrero", "Febrero","Marzo", "Marzo","Marzo", "Abril","Abril","Enero","Mayo","Febrero")
+
+# verificamos la clase de objetos almacenados en el vector
+class(meses_char)
+
+# y exploramos sus componentes
+unclass(meses_char)
+
+# conteo de frecuencias
+table(meses_char) 
+```
+
+```{r echo=TRUE}
+# 2. ... de tipo numeric
+v <- c(29,130,238,45,15,33,78)
+v
+
+# un vector también se puede inicializar invocando la función homónima
+num_vec <- vector("numeric", length=5)
+num_vec
+
+# y reemplazar sus valores
+num_vec[2] = 8+3
+num_vec
+```
+
+<br>
+
+> **Matrices**
+
+Las matrices son vectores con atributo "dimensión": la cantidad de filas y la cantidad de columnas
+
+```{r echo=TRUE}
+my_mat <- matrix(nrow=4,ncol=5)
+my_mat
+
+attributes(my_mat)
+
+dim(my_mat)
+```
+
+Las matrices se completan de izquierda a derecha, o en sentido de las columnas. De esta manera,
+
+```{r echo=TRUE}
+# podemos usar un vector
+matrix(1:8, nrow=2, ncol=4)
+
+# o asignarle un atributo dimension a un objeto de tipo vector
+my_vec <- 1:10
+dim(my_vec) <- c(2,5)
+my_vec
+```
+
+Otra forma muy común de crear martrices es a partir de la unión ...
+
+```{r echo=TRUE}
+x <- 1:3
+y <- 4:6
+
+# ... de filas
+rbind(x,y)
+
+# o de columnas
+cbind(x,y)
+```
+
+<br>
+
+> **Factors**
+
+El `factor` se puede pensar como un vector de `Integer` en el que cada item tiene su propia etiqueta. Los objetos de este tipo suelen utilizarse para representar información categórica.
+
+```{r echo=TRUE}
+
+meses_factor <- factor(meses_char,
+                       levels=c("Enero","Febrero","Marzo","Abril","Mayo"))
+
+# conteo de categorías
+table(meses_factor)
+```
+
+```{r echo=TRUE}
+# verificamos el tipo de objeto
+class(meses_factor)
+
+# y la representación subyacente de un factor
+unclass(meses_factor)
+```
+
+<br>
+
+> **Vectores y coerción de objetos**
+
+¿Qué pasa cuando mezclamos en un mismo vector objetos de distintas clases?
+
+```{r echo=TRUE}
+y <- c("ARC",594)
+class(y) # 1. castea como character
+
+y <- c(FALSE, 702)
+class(y) # 2. castea como numeric
+
+y <- c("YTE",TRUE)
+class(y) #3. castea como character
+
+```
+
+También es posible hacer coerción explícita. Lo que implicaría invocarlo como objeto de otra clase.
+
+```{r}
+# numeric como character
+as.character(c(924,999))
+
+# factor como numeric
+as.numeric(factor(c("Hombre","Mujer")))
+```
+
+<br>
+
+> **Listas**
+
+Las listas pueden ser pensadas como vectores capaces de combinar elementos de diferentes clases.
+
+```{r echo=TRUE}
+l <- list(24,"Si",FALSE)
+
+# vemos que no hay coerción
+for (i in l){
+  print(class(i))
+}
+```
+
+También son útiles para almacenar distintas estructuras de datos. Asimismo, otra característica de las listas es que permiten acceder a sus items tanto de manera ordinal (usando un índice numérico) como a partir de etiquetas (como pudieran ser las `keys` de un diccionario en python)
+
+```{r echo=TRUE}
+# creamos una lista, con dos items creados ordinalmente
+l <- list(meses_factor, c("A","B"), MTX=my_vec)
+
+# y un tercero al que se puede acceder a través de su etiqueta
+l$MTX
+
+# o de su posicional
+l[[3]]
+
+# así también creamos una lista vacía
+l_num <- vector("list",length=3)
+l_num
+```
+
+> **DataFrames**
+
+Los vectores también pueden agruparse bajo una misma estructura de datos. Para ello, R base cuenta con los Dataframes. Estos, a diferencia de las matrices, cuentan con la posibilidad de almacenar columnas o vectores de distinta clase. Un aspecto no menor es que estas deben ser del mismo largo.
+
+```{r echo=TRUE}
+vec1 <- c(18,24)
+vec2 <- c(35000,54000)
+vec3 <- c('V','M')
+
+df <- data.frame(edad=vec1, ingresos=vec2, sexo=vec3)
+df
+
+nrow(df)
+ncol(df)
+```
+
+En R base, un data.frame se puede indexar de las siguientes maneras ...
+
+```{r echo=TRUE}
+# filtramos por filas
+df[df$edad==18,]
+# o por filas y columnas
+df[df$edad==18, c('sexo','ingresos')]
+# haciendo slicing de columnas
+df[df$ingresos>40000, 1:3]
+# o eligiendo con un vector columnas específicas
+df[df$ingresos>40000, c(2,3)]
+```
+
+Un atributo muy común de los objetos en R es su `name`.
+
+```{r}
+# lo podemos encontrar en nuestro dataframe
+attributes(df)
+
+# y en nuestra lista que seteamos anteriormente
+attributes(l)
+```
+
+Y cada estructura de datos cuenta con una forma de setearlo. En dataframes y matrices, también contamos con la posibilidad de definir los nombres de las filas y de las columnas.
+
+```{r echo=TRUE}
+
+# renombramos las etiquetas de nuestra lista
+names(l) <- c("factor","vector","matriz")
+l
+
+# renombramos las columnas y las filas de nuestro dataframe
+names(df) <- c("EDAD","ING","SEX")
+row.names(df) <- c("IDX1","IDX2")
+df
+
+# también podemos hacer lo mismo con una matriz
+m <- matrix(1:4, nrow=2, ncol=2)
+dimnames <- list(c("a","b"),c("c","d"))
+m
+
+# para renombrar las filas y las columnas de una matriz podemos usar ...
+colnames(m) <- c("e","f")
+rownames(m) <- c("g","h")
+m
+```
+
+### 3. Subsetear Objetos
+
+Existen tres operadores que pueden ser utilizados para seleccionar subsets de un mismo objeto de R.
+
+-   El operador `[`. Devuele un objeto de la misma clase que su original. Se puede utilizar para seleccionar ,múltiples elementos de un objeto.
+
+-   El operador `[[`. Extrae elementos de una lista o un dataframe y se utiliza con un elemento a la vez. El objeto devuelto no necesariamente es de la misma clase lista o dataframe.
+
+-   El operador `$`. Extrae elementos de una lista o dataframe a partir de su nombre literal.
+
+> Subseteo de **vectores**
+
+```{r echo=TRUE}
+my_vec <- c("C1012","AB776","Z213")
+
+# así accedemos al primer elemento
+my_vec[1]
+
+# o a un conjunto de ellos
+my_vec[1:3] # 1.secuencia de integers
+
+# 2.vector de integers
+my_vec[c(1,3)] 
+
+# 3.vector logico
+is_palermo <- c(TRUE, FALSE, FALSE)
+my_vec[is_palermo] 
+
+# 4.expresión lógica
+starts.with.C <- grepl("^C", my_vec)
+my_vec[starts.with.C] 
+```
+
+> Subseteo de **matrices**
+
+Una matriz se puede subsetear de la forma típica *(j,i)*.
+
+```{r echo=TRUE}
+# creamos una matriz de 2 filas y 3 columnas
+x <- matrix(1:6, 2, 3)
+x
+
+# y accedemos al (2,1) elemento
+x[2,1]
+
+# o preservando el formato matriz para que no nos devuelva un vector de largo 1
+x[2,1, drop=FALSE]
+
+# la segunda fila
+x[2,]
+
+# o la primera columna
+x[,1]
+
+```
+
+> Subseteo de **listas**
+
+A grandes rasgos, existen tres formas de seleccionar elementos de una lista.
+
+```{r echo=TRUE}
+# creamos una lista
+x <- list(domicilio=c("C1012","AB776","Z213"), consumo=0.6)
+
+# seleccionamos un elemento a partir de su nombre literal
+x$domicilio
+
+# también lo podríamos haber hecho con su valor ordinal
+x[[1]]
+
+x$consumo
+
+# no hace falta recordar el orden exacto 
+x[['consumo']]
+
+
+# también podemos acceder al tercer elemento del primero en la lista
+x[[c(1,3)]]
+
+# o bien así
+x[[1]][[3]]
+
+# o incluso seleccionar múltiples elementos de una lista
+x[c(1,2)]
+
+
+# partial matching
+x$dom
+
+x[["dom", exact=FALSE]]
+```
+
+> Subseteo de **valores nulos**
+
+Otro aspecto verdaderamente útil al momento de trabajar con datos es la exclusión de objetos de clase `NA`.
+
+```{r echo=TRUE}
+
+# creamos un vector con nulos
+y <- c("C1012", NA, "AB776", NA, "Z213")
+
+# los identificamos para crear un vector de booleans o logic
+nulos <- is.na(y)
+print(!nulos)
+
+# y lo usamos para subsetear el vector
+y[!nulos]
+```
+
+Con `complete.cases` podemos hacer esta misma operación con múltiples vectores
+
+```{r echo=TRUE}
+z <- c(0.64, NA, 0.23, NA, 0.36)
+out.nulos <- complete.cases(y,z)
+print(out.nulos)
+
+y[out.nulos]
+```
+
+O mismo con un dataframe
+
+```{r}
+df.cons <- data.frame(y,z)
+colnames(df.cons) <- c("Domicilio","Consumo")
+df.cons
+
+# filtramos las filas NA
+df.cons[out.nulos,]
+```
+
+### 4. Almacenar objetos
+
+Existen diversas formas de almacenar datos en R. Ya sea en archivos de texto (.txt) o separados por comas (.csv). Más allá de eso, es útil saber que en R se puede crear una descripción representativa del tipo de objeto con los métodos `dput()` o `dump()`. Estos devuelven el objeto en formato texto editable.
+
+```{r echo=TRUE}
+# Creamos un dataset
+names(df) <- c("EDAD","ING","SEX")
+row.names(df) <- c("IDX1","IDX2")
+df
+
+# dput preserva la metadata del objeto. Por ejemplo, su clase
+dput(df)
+
+# así escribimos nuestro objeto
+dput(df, file='../data/data.R')
+# y así lo volvemos a invocar
+dget('../data/data.R')
+```
+
+`dump()` es una buena alternativa para parsear distintos objetos al mismo tiempo.
+
+```{r echo=TRUE}
+columnas <- colnames(df)
+datadir <- "../data"
+dump(c("df","columnas"), file=paste(datadir,"data_.R", sep="/"))
+
+# el inverso de dump() es source()
+source(paste(datadir,"data_.R", sep="/"))
+
+# asi recuperamos nuestros objetos
+str(df)
+
+class(columnas)
+```
+
+### 5. Dates y Times
+
+R cuenta con dos clases específicas para trabajar con temporalidad. `Dates` para fechas y `POSIXct`/`POSIXlt` para tiempos en general.
+
+Un objeto de tipo `Date` puede crearse a partir de un string.
+
+```{r echo=TRUE}
+# casteamos un char como Date con el siguiente método
+fecha <- as.Date("1985-07-22")
+fecha
+
+
+# así vemos la representación interna de un objeto Date
+unclass(fecha)
+```
+
+La clase `Date` cuenta los días a partir de `1970-01-01`. Eso es lo que vemos cuando utilizamos el metodo `unclass`.
+
+En cambio, las clases `POSIXct` y `POSIXlt` cuenta con otro tipo de representación.
+
+```{r echo=TRUE}
+ahora <- Sys.time() 
+ahora
+
+class(ahora)
+```
+
+A su vez, con la clase `POSIXlt` podemos instanciar objetos con metadata muy útil.
+
+```{r echo=TRUE}
+# instanciamos un objeto de tipo POSIXlt
+ahora_ <- as.POSIXlt(ahora)
+
+# y vemos que entre sus atributos
+attributes(unclass(ahora_))
+
+# cuentan con names
+names(unclass(ahora_))
+
+# a los que podemos acceder de la siguiente manera
+ahora_$wday
+```
+
+Si las fechas se encuentran escritas en un formato diferente, podemos acomodarlas con la función `strptime()`. Esta toma como parámetro un vector de tipo character y devuelve un obeto de tipo `POSIXlt`
+
+```{r echo=TRUE}
+# vector de fechas
+fechachar <- c("Marzo 3, 2010 10:45", "Octubre 7, 2007 18:20")
+
+# casteamos como POSIXlt
+fechaPOS <- strptime(fechachar, "%B %d, %Y %H:%M")
+fechaPOS
+class(fechaPOS)
+```
+
+También es posible hacer operaciones de suma y resta.
+
+```{r echo=TRUE}
+
+# hay que tener cuidado, las clases de objetos deben coincidir
+fecha - fechaPOS[2]
+
+# verificamos la cantidad de días transcurridos de una fecha a otra
+fechaPOS[2] - as.POSIXlt(fecha)
+```

@@ -1,0 +1,17 @@
+---
+title: "Práctica guiada"
+author: "PyMap"
+date: "2023-07-26"
+output: html_document
+---
+
+## TITULO DEL REPORTE
+
+```{r echo=FALSE}
+source('mis_reportes/mi_indicador.R')
+
+resultados <- calculo_indicador(nombre, periodo)
+resultados
+
+```
+

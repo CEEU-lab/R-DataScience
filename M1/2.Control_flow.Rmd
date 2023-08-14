@@ -1,0 +1,221 @@
+---
+title: "Introducción al lenguaje R"
+subtitle: "Control flow"
+output: html_document
+---
+
+Los comandos de `Control de flujo` (o `Control flow`) son aquellos que permiten elegir entre distintas alternativas.
+
+Entre estos, las sentencias de ejecución de ciclos o loops son¸`for`, `while` y `repeat`. A estas se le agregan `break` y `next`.
+
+Para explorar los comandos de Control flow se puede invocar `?Control` en la consola de RStudio.
+
+### 1.  Ciclos (loops)
+
+"Looping", "cycling", "iterating" no es otra cosa que automatizar un proceso de muchos pasos. O en otras palabras, es una forma de organizar secuencias de acciones que necesitan ser repetidas.
+
+En líneas generales existen dos tipo de ciclos. Aquellos que se ejecutan un número definido de veces (en función de un índice) y aquellos que se ejecutan en base a la evaluación de una condición lógica. Los primeros corresponden a la familia del `for` mientras que algunas variantes de los segundos son `while` y `repeat`
+
+#### 1.1. Ciclos por número determinado de iteraciones
+
+Se entiende por esto al ciclo con un natural, el que se alcanza dado un número n de iteraciones.\
+
+```{=html}
+<pre>
+for (value in sequence)
+{
+  expression
+}
+</pre>
+```
+
+```{r ECHO=TRUE}
+nombre <- "Buenos Aires"
+fundacion <- as.Date("1580-11-06")
+# contamos los días que pasaron desde la fecha 
+antiguedad <- as.numeric(difftime(Sys.Date(), fundacion, units="days"))
+
+# no usamos combine para mantener los dtypes de origen
+iterable <- list(nombre,fundacion,antiguedad)
+
+# recorremos cada item del iterable (nuestra lista)
+for (i in iterable){
+  # y realizamos alguna operación sobre el mismo, como conocer su clase
+  print(paste("El valor de la variable es de tipo", class(i)))
+}
+```
+
+```{r echo=TRUE}
+# creamos una secuencia de fechas y elejimos 100 al azar
+dates <- sample(seq(as.Date("1580-11-06"),Sys.Date(), by="day"),100)
+
+# y vemos cuáles son las 10 primeras
+for (i in 1:10){
+  print(dates[i])
+}
+```
+
+#### 1.2. Ciclos por condición
+
+Se entiende por esto al ciclo cuyo fin se produce cuando una condición no se cumple.
+
+Dentro de esta familia, el `while` loop tiene la particularidad de ejecutarse continuamente hasta que la condición haya sido evaluada como `FALSE`. Esto es, cuando el loop se detiene.
+
+```{=html}
+<pre>
+while (condition)
+{
+  expression
+}
+</pre>
+```
+
+```{r eval=FALSE}
+respuesta <- readline(prompt="¿Cuál es la fecha de la 2° fundación de BsAs: ")
+
+while (respuesta != as.character(fundacion)){
+  print("Fecha de fundacion incorrecta, vuelva a intentarlo")
+  respuesta <- readline(prompt="¿Cuál es la fecha de la 2° fundación de BsAs: ")
+  }
+```
+
+El `repeat` es bastante similar al `while`. Pero con la diferencia de que la expresión se cumple al menos una vez. Es decir, que propósito es que la expresión inicializada se ejecute "hasta que" la condición haya sido evaluada como `FALSE`.
+
+```{r eval=FALSE}
+repeat {
+  respuesta <- readline(prompt="¿Cuál es la fecha de la 2° fundación de BsAs: ")
+  if (respuesta == as.character(fundacion)) {
+    print("Respuesta correcta");
+    break
+  } else print("Respuesta incorrecta, vuelva a intentarlo")
+}
+```
+
+### 2.  Interrupción de ciclos
+
+Una de las formas más comunes de interrumpir un ciclo es a partir del `break`. En el siguiente ejemplo, se muestra cómo el `break` posterior al `if` del loop anidado nos regresa al primer loop. El resultado es la asignación de valores en una martriz de modo tal que su forma resultante es triangular.
+
+```{r}
+# Instanciamos un contador
+ctr = 0
+
+# Creamos una matriz de ceros de 10*10
+m = 10
+n = 10
+
+mymat = matrix(0, m, n)
+
+# iteramos las filas y las columnas
+for (i in 1:m) {
+    for (j in 1:n) {
+        if (i == j) {
+            break
+        } else {
+            # se asigna un valor siempre y cuando el nro de fila sea distinto al de columna
+            mymat[i, j] = i * j
+            ctr = ctr + 1
+        }
+    }
+    print(i * j)
+}
+
+# La cantidad total de celdas con un valor asignado
+print(ctr)
+
+# Vemos cómo luce la matriz triangular
+mymat
+```
+
+Otra forma de salir de un ciclo es el `next`. Podría decirse que esta sentencia es similar al `continue` en python. Esto es, el next lleva a la evaluación para el siguiente ciclo.
+
+```{r}
+m = 20
+
+for (k in 1:m){
+  # si es impar
+  if (!k %% 2)
+    next # pasa al siguiente ciclo
+  print(k)
+}
+```
+
+### 3.  Vectorización: una alternativa a los loops
+
+Un vector es la estructura de datos elemental de R. Como vimos anteriormente, es una colección de valores que pueden ser de distinta clase. Si combinamos vectores del mismo largo, obtenemos una matriz (la cual también se podría entender como una colección de vectores horizontales y verticales). Esto permite "vectorizar" operaciones con valores en un sentido u otro de la misma matriz.
+
+Veamos cómo podemos vectorizar un ciclo de operaciones.
+
+```{r}
+# creamos vectores
+v1 <- c(8,4)
+v2 <- c(7,3)
+v3 <- c(0,0)
+
+# iteramos
+for (i in 1:length(v1)){
+  v3[i] <- v1[i]+v2[i]
+}
+
+# vemos el resultados del loop
+v3
+
+# o simplemente vectorizamos la operacion de la siguiente manera
+v3 <- v1 + v2
+v3
+```
+
+En definitiva, la idea de vectorizar una operación está estrechamente ligada con la posibilidad de efectuar tareas de forma paralela entre distintos objetos.
+
+```{r echo=TRUE}
+
+# vectorizando
+a <- c(2,2,3) 
+b <- c(1,1,1)
+a + b
+
+# sin vectorizar, 
+l <- numeric(length(a))
+l
+
+# la operación debería operarse en un ciclo
+for(i in seq_along(a)){
+  l[i] <- a[i] + b[i]
+}
+l
+
+```
+
+En su caso, las matrices pueden ser útiles para reemplazar ciclos anidados. Vectorizando, se evita recorrer los índices `[i,j]` en un loop.
+
+```{r}
+# Armamos dos matrices
+A <- matrix(2:5, nrow=2, ncol=2)
+B <- matrix(c(3,2,6,1), nrow=2, ncol=2)
+
+# Y una tercena donde almacenar el resultado de alguna operacion
+C <- matrix(0,nrow=2,ncol=2)
+
+for (i in 1:dim(A)[1]){
+  for (j in 1:dim(B)[1]){
+    C[i,j] <- A[i,j] + B[i,j] 
+  }
+}
+
+C
+
+# Ahora vemos que vectorizando, el codigo se vuelve mucho mas compacto
+A + B
+```
+
+No solamente el código es más compacto sino que también más rápido. Esto se puede verificar utilizando `system.time()` para ambas formas de crear nuesrtra matriz.
+
+Además de la suma, resta, división y multiplicación. Otro tipo de operaciones que también pueden ser vectorizadas son las contrastaciones lógicas. Por ejemplo,
+
+```{r ECHO=TRUE}
+
+# tanto en vectores
+v3 > 12
+
+# como en martrices
+A * B
+```
