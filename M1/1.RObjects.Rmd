@@ -6,13 +6,13 @@ output: html_notebook
 
 <br>
 
-### 1. Clases
+### 1. **"Atomic" classes**
 
 <br> En R base se pueden distinguir 3 tipos de clases básicas de objetos.
 
 <br>
 
-> **"Atomic" classes**
+> **Numeric**
 
 ```{r echo=TRUE}
 # 1. numeric (números reales)
@@ -27,7 +27,7 @@ mi_int <- 5L
 class(mi_int)
 ```
 
-En general, en R los números son tratados como números reales de dos decimales. Si no se especifícase con `L` el tipo de clase, el resultado hubiera sido `5.00`.
+En general, en R los números son tratados como números reales de dos decimales. Si no se especifícase con `L` el tipo de clase, el resultado hubiera sido `5.00`. Es decir, si hubiésemos querido un objeto de tipo `integer`deberíamos definido como `5L`.
 
 También existen los números especiales, para expresiones como `Infinity`
 
@@ -62,11 +62,28 @@ Re(1+2i)
 Im(1+2i)
 ```
 
+<br>
+
+> **Character**
+
+un character soporta diversas operaciones. 
+
 ```{r echo=TRUE}
 # 2. character
 mi_ciudad <- "Buenos Aires"
 class(mi_ciudad)
 ```
+
+```{r echo=TRUE}
+toupper(mi_ciudad)
+```
+
+
+<br> 
+
+> **Logical (o booleanos)** 
+
+`verdadero` o `falso`. Evalúan el cumplimiento de alguna condición.
 
 ```{r echo=TRUE}
 #3. logical
@@ -92,13 +109,15 @@ meses_char <- c("Enero", "Febrero", "Febrero","Marzo", "Marzo","Marzo", "Abril",
 
 # verificamos la clase de objetos almacenados en el vector
 class(meses_char)
+```
 
-# y exploramos sus componentes
-unclass(meses_char)
+Con la función `table` podemos obtener un conteo de frecuencias para cada valor único de nuestro vector de characteres.
 
+```{r}
 # conteo de frecuencias
 table(meses_char) 
 ```
+
 
 ```{r echo=TRUE}
 # 2. ... de tipo numeric
@@ -118,16 +137,28 @@ num_vec
 
 > **Matrices**
 
-Las matrices son vectores con atributo "dimensión": la cantidad de filas y la cantidad de columnas
+Las matrices son vectores de dos dimensiones
 
 ```{r echo=TRUE}
+# Instanciamos una matriz
 my_mat <- matrix(nrow=4,ncol=5)
 my_mat
+```
 
+
+```{r echo=TRUE}
+# chequeamos la cantidad de dimensiones
+length(dim(my_mat))
+```
+
+Con `attributes` podemos revisar los atributos del objeto, los cuales se muestran después del signo `$`
+
+```{r echo=TRUE}
+# y vemos que cuenta con el atributo dimensión, que es la cantidad de filas y columnas definidas con el prametro <nrow>/<ncol>
 attributes(my_mat)
 
-dim(my_mat)
 ```
+
 
 Las matrices se completan de izquierda a derecha, o en sentido de las columnas. De esta manera,
 
@@ -158,10 +189,10 @@ cbind(x,y)
 
 > **Factors**
 
-El `factor` se puede pensar como un vector de `Integer` en el que cada item tiene su propia etiqueta. Los objetos de este tipo suelen utilizarse para representar información categórica.
+El `factor` se puede pensar como un vector de `Integer` en el que cada item tiene su propia etiqueta. 
+Los objetos de este tipo suelen utilizarse para representar información categórica.
 
 ```{r echo=TRUE}
-
 meses_factor <- factor(meses_char,
                        levels=c("Enero","Febrero","Marzo","Abril","Mayo"))
 
@@ -172,10 +203,15 @@ table(meses_factor)
 ```{r echo=TRUE}
 # verificamos el tipo de objeto
 class(meses_factor)
+```
 
+Con la función `unclass` vemos lo que había antes de aplicar una clase. Así es que vemos en primer lugar un vector de numéricos y luego el atributo etiqueta al que corresponde cada objeto de la colección.
+
+```{r echo=TRUE}
 # y la representación subyacente de un factor
 unclass(meses_factor)
 ```
+
 
 <br>
 
@@ -304,7 +340,7 @@ m
 
 Existen tres operadores que pueden ser utilizados para seleccionar subsets de un mismo objeto de R.
 
--   El operador `[`. Devuele un objeto de la misma clase que su original. Se puede utilizar para seleccionar ,múltiples elementos de un objeto.
+-   El operador `[`. Devuele un objeto de la misma clase que su original. Se puede utilizar para seleccionar, múltiples elementos de un objeto.
 
 -   El operador `[[`. Extrae elementos de una lista o un dataframe y se utiliza con un elemento a la vez. El objeto devuelto no necesariamente es de la misma clase lista o dataframe.
 
@@ -312,23 +348,25 @@ Existen tres operadores que pueden ser utilizados para seleccionar subsets de un
 
 > Subseteo de **vectores**
 
+Un vector se puede subsetear de varias formas. 
+
 ```{r echo=TRUE}
 my_vec <- c("C1012","AB776","Z213")
 
-# así accedemos al primer elemento
+# 1. así accedemos al primer item, con un posicional
 my_vec[1]
 
-# o a un conjunto de ellos
-my_vec[1:3] # 1.secuencia de integers
+# 2. o a un conjunto de ellos utilizando una de integers
+my_vec[1:3] 
 
-# 2.vector de integers
+#  o un vector de integers
 my_vec[c(1,3)] 
 
-# 3.vector logico
+# 3. tambien podemos usar un vector logico
 is_palermo <- c(TRUE, FALSE, FALSE)
 my_vec[is_palermo] 
 
-# 4.expresión lógica
+# 4. y hasta una expresión lógica
 starts.with.C <- grepl("^C", my_vec)
 my_vec[starts.with.C] 
 ```
@@ -364,19 +402,20 @@ A grandes rasgos, existen tres formas de seleccionar elementos de una lista.
 # creamos una lista
 x <- list(domicilio=c("C1012","AB776","Z213"), consumo=0.6)
 
-# seleccionamos un elemento a partir de su nombre literal
+# 1. seleccionamos un elemento a partir de su nombre literal
 x$domicilio
+# o bien
+x[['domicilio']]
 
-# también lo podríamos haber hecho con su valor ordinal
+# o usando partial matching
+x$dom
+
+x[["dom", exact=FALSE]]
+
+# 2. también lo podríamos haber hecho con su valor ordinal
 x[[1]]
 
-x$consumo
-
-# no hace falta recordar el orden exacto 
-x[['consumo']]
-
-
-# también podemos acceder al tercer elemento del primero en la lista
+# 3. también podemos acceder al tercer elemento del primero en la lista
 x[[c(1,3)]]
 
 # o bien así
@@ -384,12 +423,6 @@ x[[1]][[3]]
 
 # o incluso seleccionar múltiples elementos de una lista
 x[c(1,2)]
-
-
-# partial matching
-x$dom
-
-x[["dom", exact=FALSE]]
 ```
 
 > Subseteo de **valores nulos**
@@ -403,6 +436,8 @@ y <- c("C1012", NA, "AB776", NA, "Z213")
 
 # los identificamos para crear un vector de booleans o logic
 nulos <- is.na(y)
+
+# el ! significa, "los valores contrarios a"
 print(!nulos)
 
 # y lo usamos para subsetear el vector
@@ -422,6 +457,7 @@ y[out.nulos]
 O mismo con un dataframe
 
 ```{r}
+# creamos un df con los vectores y, z
 df.cons <- data.frame(y,z)
 colnames(df.cons) <- c("Domicilio","Consumo")
 df.cons
@@ -525,8 +561,8 @@ También es posible hacer operaciones de suma y resta.
 ```{r echo=TRUE}
 
 # hay que tener cuidado, las clases de objetos deben coincidir
-fecha - fechaPOS[2]
+# fecha - fechaPOS[2]
 
-# verificamos la cantidad de días transcurridos de una fecha a otra
+# por eso, casteamos a POSIXlt para verificar la cantidad de días transcurridos de una fecha a otra
 fechaPOS[2] - as.POSIXlt(fecha)
 ```
