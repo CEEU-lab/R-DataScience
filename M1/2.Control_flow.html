@@ -356,14 +356,58 @@ display: none;
 
 <p>Los comandos de <code>Control de flujo</code> (o
 <code>Control flow</code>) son aquellos que permiten elegir entre
-distintas alternativas.</p>
-<p>Entre estos, las sentencias de ejecución de ciclos o loops
-son¸<code>for</code>, <code>while</code> y <code>repeat</code>. A estas
-se le agregan <code>break</code> y <code>next</code>.</p>
+distintas alternativas. En otras palabras, son estructuras de control
+que nos permiten decidir cómo queremos que se ejecute nuestro
+código.</p>
+<p>Para eso, establecen condiciones que deben cumplirse para que una
+operación ocurra. Entre las estructuras de control más comunes, podemos
+mencionar las sentencias de ejecución <code>if</code>, <code>else</code>
+y las de ciclos o loops como <code>for</code>, <code>while</code> y
+<code>repeat</code>. A estas se le agregan <code>break</code> y
+<code>next</code>.</p>
 <p>Para explorar los comandos de Control flow se puede invocar
 <code>?Control</code> en la consola de RStudio.</p>
+<p><br></p>
+<div id="condicionales-si-de-otro-modo" class="section level3">
+<h3>1. Condicionales (si, de otro modo)</h3>
+<p>Para que una operación se ejecute, una condición debe evaluarse como
+verdadera. Es decir, si la condición nos devuelve un logic de tipo TRUE,
+entonces la operación entre llaves va a ser ejecutada</p>
+<pre>
+if (cumple_condicion)
+{
+  expression
+}
+</pre>
+<pre class="r"><code># Por ejemplo,
+if (8 &gt; 5){
+  print(&quot;Se cumple la condición&quot;)
+}</code></pre>
+<pre><code>## [1] &quot;Se cumple la condición&quot;</code></pre>
+<p><br></p>
+<p>Pero qué sucede si la condición no se cumple,</p>
+<pre class="r"><code>if (8 &gt; 12){
+  print(&quot;Se cumple la condición&quot;)
+} else {
+  print(&quot;No se cumple la condición&quot;)
+}</code></pre>
+<pre><code>## [1] &quot;No se cumple la condición&quot;</code></pre>
+<p><br></p>
+<p>Por último, qué pasa si no se cumple la primer condición, pero sí una
+segunda.</p>
+<pre class="r"><code># if elif else
+if (8 &gt; 12){
+  print(&quot;Se cumple la condición&quot;)
+} else if (8 &lt; 12) {
+  print(&quot;Se cumple una segunda condición&quot;)
+} else {
+  print(&quot;No se cumple ninguna de las dos condiciones&quot;)
+}</code></pre>
+<pre><code>## [1] &quot;Se cumple una segunda condición&quot;</code></pre>
+<p><br></p>
+</div>
 <div id="ciclos-loops" class="section level3">
-<h3>1. Ciclos (loops)</h3>
+<h3>2. Ciclos (loops)</h3>
 <p>“Looping”, “cycling”, “iterating” no es otra cosa que automatizar un
 proceso de muchos pasos. O en otras palabras, es una forma de organizar
 secuencias de acciones que necesitan ser repetidas.</p>
@@ -372,11 +416,12 @@ ejecutan un número definido de veces (en función de un índice) y
 aquellos que se ejecutan en base a la evaluación de una condición
 lógica. Los primeros corresponden a la familia del <code>for</code>
 mientras que algunas variantes de los segundos son <code>while</code> y
-<code>repeat</code></p>
+<code>repeat</code>.</p>
+<p><br></p>
 <div id="ciclos-por-número-determinado-de-iteraciones" class="section level4">
-<h4>1.1. Ciclos por número determinado de iteraciones</h4>
-<p>Se entiende por esto al ciclo con un natural, el que se alcanza dado
-un número n de iteraciones.<br />
+<h4>2.1. Ciclos por número determinado de iteraciones</h4>
+<p>Se entiende por esto al ciclo natural, el que se alcanza dado un
+número n de iteraciones.<br />
 </p>
 <pre>
 for (value in sequence)
@@ -386,6 +431,7 @@ for (value in sequence)
 </pre>
 <pre class="r"><code>nombre &lt;- &quot;Buenos Aires&quot;
 fundacion &lt;- as.Date(&quot;1580-11-06&quot;)
+
 # contamos los días que pasaron desde la fecha 
 antiguedad &lt;- as.numeric(difftime(Sys.Date(), fundacion, units=&quot;days&quot;))
 
@@ -407,19 +453,20 @@ dates &lt;- sample(seq(as.Date(&quot;1580-11-06&quot;),Sys.Date(), by=&quot;day&
 for (i in 1:10){
   print(dates[i])
 }</code></pre>
-<pre><code>## [1] &quot;1597-08-29&quot;
-## [1] &quot;2001-07-02&quot;
-## [1] &quot;1987-03-08&quot;
-## [1] &quot;1654-05-21&quot;
-## [1] &quot;1699-10-18&quot;
-## [1] &quot;1710-05-17&quot;
-## [1] &quot;2019-02-08&quot;
-## [1] &quot;1848-03-16&quot;
-## [1] &quot;1615-01-05&quot;
-## [1] &quot;2015-04-04&quot;</code></pre>
+<pre><code>## [1] &quot;1667-09-11&quot;
+## [1] &quot;1798-06-16&quot;
+## [1] &quot;1853-05-18&quot;
+## [1] &quot;1854-05-12&quot;
+## [1] &quot;1949-05-13&quot;
+## [1] &quot;1694-11-21&quot;
+## [1] &quot;1687-04-04&quot;
+## [1] &quot;1698-10-16&quot;
+## [1] &quot;2008-09-08&quot;
+## [1] &quot;1610-04-17&quot;</code></pre>
+<p><br></p>
 </div>
 <div id="ciclos-por-condición" class="section level4">
-<h4>1.2. Ciclos por condición</h4>
+<h4>2.2. Ciclos por condición</h4>
 <p>Se entiende por esto al ciclo cuyo fin se produce cuando una
 condición no se cumple.</p>
 <p>Dentro de esta familia, el <code>while</code> loop tiene la
@@ -438,6 +485,7 @@ while (respuesta != as.character(fundacion)){
   print(&quot;Fecha de fundacion incorrecta, vuelva a intentarlo&quot;)
   respuesta &lt;- readline(prompt=&quot;¿Cuál es la fecha de la 2° fundación de BsAs: &quot;)
   }</code></pre>
+<p><br></p>
 <p>El <code>repeat</code> es bastante similar al <code>while</code>.
 Pero con la diferencia de que la expresión se cumple al menos una vez.
 Es decir, que propósito es que la expresión inicializada se ejecute
@@ -449,10 +497,11 @@ Es decir, que propósito es que la expresión inicializada se ejecute
     break
   } else print(&quot;Respuesta incorrecta, vuelva a intentarlo&quot;)
 }</code></pre>
+<p><br></p>
 </div>
 </div>
 <div id="interrupción-de-ciclos" class="section level3">
-<h3>2. Interrupción de ciclos</h3>
+<h3>3. Interrupción de ciclos</h3>
 <p>Una de las formas más comunes de interrumpir un ciclo es a partir del
 <code>break</code>. En el siguiente ejemplo, se muestra cómo el
 <code>break</code> posterior al <code>if</code> del loop anidado nos
@@ -506,6 +555,7 @@ mymat</code></pre>
 ##  [8,]    8   16   24   32   40   48   56    0    0     0
 ##  [9,]    9   18   27   36   45   54   63   72    0     0
 ## [10,]   10   20   30   40   50   60   70   80   90     0</code></pre>
+<p><br></p>
 <p>Otra forma de salir de un ciclo es el <code>next</code>. Podría
 decirse que esta sentencia es similar al <code>continue</code> en
 python. Esto es, el next lleva a la evaluación para el siguiente
@@ -528,9 +578,10 @@ for (k in 1:m){
 ## [1] 15
 ## [1] 17
 ## [1] 19</code></pre>
+<p><br></p>
 </div>
 <div id="vectorización-una-alternativa-a-los-loops" class="section level3">
-<h3>3. Vectorización: una alternativa a los loops</h3>
+<h3>4. Vectorización: una alternativa a los loops</h3>
 <p>Un vector es la estructura de datos elemental de R. Como vimos
 anteriormente, es una colección de valores que pueden ser de distinta
 clase. Si combinamos vectores del mismo largo, obtenemos una matriz (la
@@ -555,6 +606,7 @@ v3</code></pre>
 v3 &lt;- v1 + v2
 v3</code></pre>
 <pre><code>## [1] 15  7</code></pre>
+<p><br></p>
 <p>En definitiva, la idea de vectorizar una operación está estrechamente
 ligada con la posibilidad de efectuar tareas de forma paralela entre
 distintos objetos.</p>
@@ -573,6 +625,7 @@ for(i in seq_along(a)){
 }
 l</code></pre>
 <pre><code>## [1] 3 3 4</code></pre>
+<p><br></p>
 <p>En su caso, las matrices pueden ser útiles para reemplazar ciclos
 anidados. Vectorizando, se evita recorrer los índices <code>[i,j]</code>
 en un loop.</p>
@@ -598,6 +651,7 @@ A + B</code></pre>
 <pre><code>##      [,1] [,2]
 ## [1,]    5   10
 ## [2,]    5    6</code></pre>
+<p><br></p>
 <p>No solamente el código es más compacto sino que también más rápido.
 Esto se puede verificar utilizando <code>system.time()</code> para ambas
 formas de crear nuesrtra matriz.</p>

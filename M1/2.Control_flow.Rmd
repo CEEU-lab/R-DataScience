@@ -4,21 +4,76 @@ subtitle: "Control flow"
 output: html_document
 ---
 
-Los comandos de `Control de flujo` (o `Control flow`) son aquellos que permiten elegir entre distintas alternativas.
+Los comandos de `Control de flujo` (o `Control flow`) son aquellos que permiten elegir entre distintas alternativas. En otras palabras, son estructuras de control que nos permiten decidir cómo queremos que se ejecute nuestro código.
 
-Entre estos, las sentencias de ejecución de ciclos o loops son¸`for`, `while` y `repeat`. A estas se le agregan `break` y `next`.
+Para eso, establecen condiciones que deben cumplirse para que una operación ocurra. Entre las estructuras de control más comunes, podemos mencionar las sentencias de ejecución `if`, `else` y las de ciclos o loops como `for`, `while` y `repeat`. A estas se le agregan `break` y `next`.
 
 Para explorar los comandos de Control flow se puede invocar `?Control` en la consola de RStudio.
 
-### 1.  Ciclos (loops)
+<br>
+
+### 1.  Condicionales (si, de otro modo)
+
+Para que una operación se ejecute, una condición debe evaluarse como verdadera. Es decir, si la condición nos devuelve un logic de tipo TRUE, entonces la operación entre llaves va a ser ejecutada
+
+```{=html}
+<pre>
+if (cumple_condicion)
+{
+  expression
+}
+</pre>
+```
+
+```{r echo=TRUE}
+# Por ejemplo,
+if (8 > 5){
+  print("Se cumple la condición")
+}
+
+```
+
+<br>
+
+Pero qué sucede si la condición no se cumple,
+```{r echo=TRUE}
+
+if (8 > 12){
+  print("Se cumple la condición")
+} else {
+  print("No se cumple la condición")
+}
+
+```
+
+<br>
+
+Por último, qué pasa si no se cumple la primer condición, pero sí una segunda.
+
+```{r}
+# if elif else
+if (8 > 12){
+  print("Se cumple la condición")
+} else if (8 < 12) {
+  print("Se cumple una segunda condición")
+} else {
+  print("No se cumple ninguna de las dos condiciones")
+}
+```
+
+<br>
+
+### 2.  Ciclos (loops)
 
 "Looping", "cycling", "iterating" no es otra cosa que automatizar un proceso de muchos pasos. O en otras palabras, es una forma de organizar secuencias de acciones que necesitan ser repetidas.
 
-En líneas generales existen dos tipo de ciclos. Aquellos que se ejecutan un número definido de veces (en función de un índice) y aquellos que se ejecutan en base a la evaluación de una condición lógica. Los primeros corresponden a la familia del `for` mientras que algunas variantes de los segundos son `while` y `repeat`
+En líneas generales existen dos tipo de ciclos. Aquellos que se ejecutan un número definido de veces (en función de un índice) y aquellos que se ejecutan en base a la evaluación de una condición lógica. Los primeros corresponden a la familia del `for` mientras que algunas variantes de los segundos son `while` y `repeat`.
 
-#### 1.1. Ciclos por número determinado de iteraciones
+<br>
 
-Se entiende por esto al ciclo con un natural, el que se alcanza dado un número n de iteraciones.\
+#### 2.1. Ciclos por número determinado de iteraciones
+
+Se entiende por esto al ciclo natural, el que se alcanza dado un número n de iteraciones.\
 
 ```{=html}
 <pre>
@@ -32,6 +87,7 @@ for (value in sequence)
 ```{r ECHO=TRUE}
 nombre <- "Buenos Aires"
 fundacion <- as.Date("1580-11-06")
+
 # contamos los días que pasaron desde la fecha 
 antiguedad <- as.numeric(difftime(Sys.Date(), fundacion, units="days"))
 
@@ -54,8 +110,9 @@ for (i in 1:10){
   print(dates[i])
 }
 ```
+<br>
 
-#### 1.2. Ciclos por condición
+#### 2.2. Ciclos por condición
 
 Se entiende por esto al ciclo cuyo fin se produce cuando una condición no se cumple.
 
@@ -79,6 +136,8 @@ while (respuesta != as.character(fundacion)){
   }
 ```
 
+<br>
+
 El `repeat` es bastante similar al `while`. Pero con la diferencia de que la expresión se cumple al menos una vez. Es decir, que propósito es que la expresión inicializada se ejecute "hasta que" la condición haya sido evaluada como `FALSE`.
 
 ```{r eval=FALSE}
@@ -91,7 +150,9 @@ repeat {
 }
 ```
 
-### 2.  Interrupción de ciclos
+<br>
+
+### 3.  Interrupción de ciclos
 
 Una de las formas más comunes de interrumpir un ciclo es a partir del `break`. En el siguiente ejemplo, se muestra cómo el `break` posterior al `if` del loop anidado nos regresa al primer loop. El resultado es la asignación de valores en una martriz de modo tal que su forma resultante es triangular.
 
@@ -126,6 +187,8 @@ print(ctr)
 mymat
 ```
 
+<br>
+
 Otra forma de salir de un ciclo es el `next`. Podría decirse que esta sentencia es similar al `continue` en python. Esto es, el next lleva a la evaluación para el siguiente ciclo.
 
 ```{r}
@@ -139,7 +202,9 @@ for (k in 1:m){
 }
 ```
 
-### 3.  Vectorización: una alternativa a los loops
+<br>
+
+### 4.  Vectorización: una alternativa a los loops
 
 Un vector es la estructura de datos elemental de R. Como vimos anteriormente, es una colección de valores que pueden ser de distinta clase. Si combinamos vectores del mismo largo, obtenemos una matriz (la cual también se podría entender como una colección de vectores horizontales y verticales). Esto permite "vectorizar" operaciones con valores en un sentido u otro de la misma matriz.
 
@@ -164,6 +229,8 @@ v3 <- v1 + v2
 v3
 ```
 
+<br>
+
 En definitiva, la idea de vectorizar una operación está estrechamente ligada con la posibilidad de efectuar tareas de forma paralela entre distintos objetos.
 
 ```{r echo=TRUE}
@@ -184,6 +251,8 @@ for(i in seq_along(a)){
 l
 
 ```
+
+<br>
 
 En su caso, las matrices pueden ser útiles para reemplazar ciclos anidados. Vectorizando, se evita recorrer los índices `[i,j]` en un loop.
 
@@ -206,6 +275,8 @@ C
 # Ahora vemos que vectorizando, el codigo se vuelve mucho mas compacto
 A + B
 ```
+
+<br>
 
 No solamente el código es más compacto sino que también más rápido. Esto se puede verificar utilizando `system.time()` para ambas formas de crear nuesrtra matriz.
 
