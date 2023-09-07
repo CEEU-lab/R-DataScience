@@ -4,19 +4,20 @@ subtitle: "Looping functions"
 output: html_document
 ---
 
-La función apply y sus variantes sirven to manipulate slices of data in the form of matrices, arrays, lists or dataframes in a repetitive way, allowing to cross or traverse the data and avoiding explicit use of loop constructs. 
+La función `apply` y sus variantes sirven para mapear operaciones a los distintos items de una colección teniendo en cuenta la estructura de la misma. Es decir, hay tantas maneras de recorrer una colección como tipos de colecciones. Así es que la familia de los `apply` contempla si el conjunto de objetos que se va a iterar se presenta en forma de matrices, arrays, listas o dataframes. 
 
-The functions act on an input matrix or array and apply a chosen named function with one or several optional arguments.
-
+<br>
 
 ### 1. apply()
-You want to apply a given function to the rows (index “1”) or columns (index “2”) of a matrix or dataframe. 
+Digamos que queremos aplicar una función a lo largo de las filas (index “1”) o de las columnas (index “2”) de una matriz o dataframe. 
 
 `apply(X, MARGIN, FUN, ...)`
 
-* X is an array or a matrix if the dimension of the array is 2;
-* MARGIN is a variable defining how the function is applied: when MARGIN=1, it applies over rows, whereas with MARGIN=2, it works over columns. Note that when you use the construct MARGIN=c(1,2), it applies to both rows and columns; and
-* FUN, which is the function that you want to apply to the data. It can be any R function, including a User Defined Function (UDF).
+* X es un array o a matriz si la dimension del array es 2;
+* MARGIN define cómo se aplica la función: si MARGIN=1, se aplica sobre las filas, si MARGIN=2, trabaja sobre las columnas. Note cuando se usa el construct MARGIN=c(1,2), la función se aplica en ambos sentidos; y
+* FUN, que es la función que se quiere aplicar a la data. Puede ser cualquier función de R, incluyendo las UDF (User Defined Functions).
+
+<br>
 
 ```{r ECHO=TRUE}
 mymat <- matrix(rep(seq(5), 4), ncol=5)
@@ -33,11 +34,14 @@ apply(mymat, 1, function(x, y)
 
 ```
 
-The apply() functions form the basis of more complex combinations and helps to perform operations with very few lines of code. More specifically, the family is made up of the `apply()`, `lapply()`, `sapply()`, `vapply()`, `mapply()`, `rapply()`, and `tapply()` functions.
+La familia de los `apply` está compuesta por `apply()`, `lapply()`, `sapply()`, `vapply()`, `mapply()`, `rapply()` y `tapply()`.
+
+<br>
 
 ### 2. lapply()
 
-You want to apply a given function to every element of a list and obtain a list as a result.
+Digamos que queremos aplicar una función a cada elemento de una lista y obtener como resultado otra lista.
+
 ```{r ECHO=TRUE}
 # ejemplo1
 x <- list(a= 1:5, b= rnorm(10))
@@ -53,6 +57,8 @@ lapply(x,runif)
 # o bien usando argumentos de la funcion runif
 lapply(x,runif, min=2, max=8)
 ```
+<br>
+
 ### 3. Combinar apply con una funcion anónima
 ```{r echo=TRUE}
 # por ejemplo, para llamar a la primera columna en un listado de martices
