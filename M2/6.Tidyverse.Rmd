@@ -1,7 +1,7 @@
 ---
 title: "Introducción al lenguaje R"
 subtitle: "Tidyverse: lectura, manipulación y transformación de bases de datos"
-output: html_notebook
+output: html_document
 ---
 
 <br>

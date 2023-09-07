@@ -1,9 +1,7 @@
 ---
 title: "Introducción al lenguaje R"
 subtitle: Funciones definidas por el usuario
-output:
-  html_document:
-    df_print: paged
+output: html_document
 ---
 
 En R, las funciones pueden ser tratadas como cualquier otra clase de objetos. Son un recurso muy útil para mecanizar operaciones ya que trabajan modularizando una expresión que puede ser ejecutada con parámetros variables.

@@ -1,7 +1,7 @@
 ---
 title: "Introducción al lenguaje R"
 subtitle: "Looping functions"
-output: html_notebook
+output: html_document
 ---
 
 La función apply y sus variantes sirven to manipulate slices of data in the form of matrices, arrays, lists or dataframes in a repetitive way, allowing to cross or traverse the data and avoiding explicit use of loop constructs. 
