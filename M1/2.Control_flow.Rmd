@@ -50,7 +50,7 @@ if (8 > 12){
 
 Por último, qué pasa si no se cumple la primer condición, pero sí una segunda.
 
-```{r}
+```{r echo=TRUE}
 # if elif else
 if (8 > 12){
   print("Se cumple la condición")
