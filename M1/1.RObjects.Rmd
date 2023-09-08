@@ -495,11 +495,13 @@ dump(c("df","columnas"), file=paste(datadir,"data_.R", sep="/"))
 # el inverso de dump() es source()
 source(paste(datadir,"data_.R", sep="/"))
 
-# asi recuperamos nuestros objetos
+# asi vemos la estructura de nuestro objeto
 str(df)
 
 class(columnas)
 ```
+
+Hasta ahora vimos que con `class()` revisamos de qué tipo es el objeto. Con `attributes()` podemos listar los atributos de nuestro objeto. Y con `str()` vemos su estructura.
 
 ### 5. Dates y Times
 
@@ -558,10 +560,10 @@ class(fechaPOS)
 
 También es posible hacer operaciones de suma y resta.
 
-```{r echo=TRUE}
+```{r echo=TRUE, eval=FALSE}
 
 # hay que tener cuidado, las clases de objetos deben coincidir
-# fecha - fechaPOS[2]
+fecha - fechaPOS[2]
 
 # por eso, casteamos a POSIXlt para verificar la cantidad de días transcurridos de una fecha a otra
 fechaPOS[2] - as.POSIXlt(fecha)

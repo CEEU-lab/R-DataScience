@@ -876,7 +876,7 @@ dump(c(&quot;df&quot;,&quot;columnas&quot;), file=paste(datadir,&quot;data_.R&qu
 # el inverso de dump() es source()
 source(paste(datadir,&quot;data_.R&quot;, sep=&quot;/&quot;))
 
-# asi recuperamos nuestros objetos
+# asi vemos la estructura de nuestro objeto
 str(df)</code></pre>
 <pre><code>## &#39;data.frame&#39;:    2 obs. of  3 variables:
 ##  $ EDAD: num  18 24
@@ -884,6 +884,9 @@ str(df)</code></pre>
 ##  $ SEX : chr  &quot;V&quot; &quot;M&quot;</code></pre>
 <pre class="r"><code>class(columnas)</code></pre>
 <pre><code>## [1] &quot;character&quot;</code></pre>
+<p>Hasta ahora vimos que con <code>class()</code> revisamos de qué tipo
+es el objeto. Con <code>attributes()</code> podemos listar los atributos
+de nuestro objeto. Y con <code>str()</code> vemos su estructura.</p>
 </div>
 <div id="dates-y-times" class="section level3">
 <h3>5. Dates y Times</h3>
@@ -906,7 +909,7 @@ unclass(fecha)</code></pre>
 cuenta con otro tipo de representación.</p>
 <pre class="r"><code>ahora &lt;- Sys.time() 
 ahora</code></pre>
-<pre><code>## [1] &quot;2023-09-07 11:22:22 -03&quot;</code></pre>
+<pre><code>## [1] &quot;2023-09-08 13:17:26 -03&quot;</code></pre>
 <pre class="r"><code>class(ahora)</code></pre>
 <pre><code>## [1] &quot;POSIXct&quot; &quot;POSIXt&quot;</code></pre>
 <p>A su vez, con la clase <code>POSIXlt</code> podemos instanciar
@@ -931,7 +934,7 @@ names(unclass(ahora_))</code></pre>
 ##  [9] &quot;isdst&quot;  &quot;zone&quot;   &quot;gmtoff&quot;</code></pre>
 <pre class="r"><code># a los que podemos acceder de la siguiente manera
 ahora_$wday</code></pre>
-<pre><code>## [1] 4</code></pre>
+<pre><code>## [1] 5</code></pre>
 <p>Si las fechas se encuentran escritas en un formato diferente, podemos
 acomodarlas con la función <code>strptime()</code>. Esta toma como
 parámetro un vector de tipo character y devuelve un obeto de tipo
@@ -947,11 +950,10 @@ fechaPOS</code></pre>
 <pre><code>## [1] &quot;POSIXlt&quot; &quot;POSIXt&quot;</code></pre>
 <p>También es posible hacer operaciones de suma y resta.</p>
 <pre class="r"><code># hay que tener cuidado, las clases de objetos deben coincidir
-# fecha - fechaPOS[2]
+fecha - fechaPOS[2]
 
 # por eso, casteamos a POSIXlt para verificar la cantidad de días transcurridos de una fecha a otra
 fechaPOS[2] - as.POSIXlt(fecha)</code></pre>
-<pre><code>## Time difference of 8112.889 days</code></pre>
 </div>
 
 
