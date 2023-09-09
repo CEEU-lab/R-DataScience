@@ -408,42 +408,42 @@ lapply(x,mean)</code></pre>
 ## [1] 3
 ## 
 ## $b
-## [1] -0.2511131</code></pre>
+## [1] 0.07783689</code></pre>
 <pre class="r"><code>#ejemplo2
 x &lt;- 1:5
 
 # genero variables aleatorias uniformemente distribuidas a partir de cada input
 lapply(x,runif)</code></pre>
 <pre><code>## [[1]]
-## [1] 0.01376785
+## [1] 0.3060305
 ## 
 ## [[2]]
-## [1] 0.40440346 0.06526886
+## [1] 0.41793913 0.02218995
 ## 
 ## [[3]]
-## [1] 0.2336982 0.6429565 0.8063312
+## [1] 0.7429419 0.7412302 0.5083427
 ## 
 ## [[4]]
-## [1] 0.70702338 0.52809805 0.04133268 0.59196048
+## [1] 0.8734758 0.8351538 0.3590153 0.8679901
 ## 
 ## [[5]]
-## [1] 0.3447711 0.3527968 0.3827847 0.5292215 0.4922892</code></pre>
+## [1] 0.4154054 0.2460534 0.7702708 0.5438952 0.6508625</code></pre>
 <pre class="r"><code># o bien usando argumentos de la funcion runif
 lapply(x,runif, min=2, max=8)</code></pre>
 <pre><code>## [[1]]
-## [1] 7.815023
+## [1] 6.234233
 ## 
 ## [[2]]
-## [1] 4.884166 4.327240
+## [1] 3.547043 5.174548
 ## 
 ## [[3]]
-## [1] 7.523010 2.797890 4.383958
+## [1] 2.798753 3.806299 3.030868
 ## 
 ## [[4]]
-## [1] 3.821100 4.980408 2.146179 3.970224
+## [1] 3.782851 2.052978 5.281107 7.534211
 ## 
 ## [[5]]
-## [1] 7.775662 2.867897 4.872036 7.621471 2.952391</code></pre>
+## [1] 3.978696 7.773904 6.963952 7.338288 7.613728</code></pre>
 <p><br></p>
 </div>
 <div id="combinar-apply-con-una-funcion-anónima" class="section level3">
@@ -473,10 +473,36 @@ lapply(x, mean)</code></pre>
 ## [1] 2
 ## 
 ## $b
-## [1] 0.06475474</code></pre>
+## [1] -0.1696969</code></pre>
 <pre class="r"><code>sapply(x,mean)</code></pre>
 <pre><code>##          a          b 
-## 2.00000000 0.06475474</code></pre>
+##  2.0000000 -0.1696969</code></pre>
+<p><code>sapply</code> también puede utilizarse para reemplazar valores
+en un data.frame. Este uso es mucho menos usual ya que lo que comunmente
+se aplica para efectuar este tipo de operaciones es el método
+<code>case_when()</code> de <code>deployr</code>.</p>
+<pre class="r"><code>library(datasets)
+
+# Personalizo funcion para iterar sobre cada objeto de la colección
+at &lt;- datasets::airquality
+replace_ref &lt;- function(x){
+  if (x == 5){
+    return(&quot;may&quot;)
+  } else if(x == 6){
+    return(&quot;jun&quot;)
+  } else if(x == 7){
+    return(&quot;jul&quot;)
+  } else if(x == 8){
+    return(&quot;ago&quot;)
+  } else{
+    return(&quot;sep&quot;)
+  }
+}
+
+# Mapeo los reemplazos
+at$Month &lt;- sapply(at$Month, replace_ref)
+unique(at$Month)</code></pre>
+<pre><code>## [1] &quot;may&quot; &quot;jun&quot; &quot;jul&quot; &quot;ago&quot; &quot;sep&quot;</code></pre>
 </div>
 <div id="split" class="section level3">
 <h3>5. split()</h3>
@@ -659,23 +685,23 @@ R en paralelo (en lugar de uno por vez como hacían los
 
 # simulamos 5 numeros aleatorios, o bien
 noise(5,2,1)</code></pre>
-<pre><code>## [1] 1.250448 1.599799 1.952046 2.050436 1.311363</code></pre>
+<pre><code>## [1] 1.624359 1.028180 1.401846 2.674596 3.342508</code></pre>
 <pre class="r"><code># mapeamos noise a 5 sets distintos de n y avg que corren en paralelo
 mapply(noise, 5:1, 5:1, 2)</code></pre>
 <pre><code>## [[1]]
-## [1] 2.805571 6.760564 4.920118 2.793164 5.855870
+## [1] 5.148382 4.525000 6.725358 5.366866 7.522910
 ## 
 ## [[2]]
-## [1] 6.840284 5.304117 3.552816 2.093388
+## [1] 6.1268094 3.7280394 4.1325872 0.9920194
 ## 
 ## [[3]]
-## [1] 4.106072 2.046557 4.682971
+## [1] 1.329923 2.092492 2.856953
 ## 
 ## [[4]]
-## [1] 2.032046 2.791430
+## [1] 1.852718 3.779318
 ## 
 ## [[5]]
-## [1] -0.9897024</code></pre>
+## [1] 0.2144391</code></pre>
 </div>
 <div id="vectorizar-una-función" class="section level3">
 <h3>9. Vectorizar una función</h3>
@@ -692,12 +718,12 @@ x &lt;- rnorm(10)
 
 # y mapeamos la funcion a distintas combinaciones de mu y sigma para los valores de x
 mapply(sumsq, 1:5, 1:5, MoreArgs = list(x = x))</code></pre>
-<pre><code>## [1] 10.710348  9.528890  9.502308  9.557874  9.613248</code></pre>
+<pre><code>## [1] 10.365635  8.800773  8.893395  9.054876  9.188619</code></pre>
 <p>La funcion <code>Vectorize()</code> sirve para crear una version
 vectorizada de una misma función</p>
 <pre class="r"><code>vsumsq &lt;- Vectorize(sumsq, c(&quot;mu&quot;,&quot;sigma&quot;))
 vsumsq(1:5,1:5,x)</code></pre>
-<pre><code>## [1] 10.710348  9.528890  9.502308  9.557874  9.613248</code></pre>
+<pre><code>## [1] 10.365635  8.800773  8.893395  9.054876  9.188619</code></pre>
 <p>Como se puede apreciar, nuestro vector <code>x</code> es utilizado en
 la función con distintas combinaciones de mu y sigma (las cuales se
 pasan tambien como secuencia de 1:5). Tanto con <code>mapply()</code>

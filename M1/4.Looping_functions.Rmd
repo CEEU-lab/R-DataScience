@@ -79,6 +79,34 @@ lapply(x, mean)
 sapply(x,mean)
 
 ```
+
+`sapply` también puede utilizarse para reemplazar valores en un data.frame. Este uso es mucho menos usual ya que lo que comunmente se aplica para efectuar este tipo de operaciones es el método `case_when()` de `deployr`. 
+
+```{r echo=TRUE}
+library(datasets)
+
+# Personalizo funcion para iterar sobre cada objeto de la colección
+at <- datasets::airquality
+replace_ref <- function(x){
+  if (x == 5){
+    return("may")
+  } else if(x == 6){
+    return("jun")
+  } else if(x == 7){
+    return("jul")
+  } else if(x == 8){
+    return("ago")
+  } else{
+    return("sep")
+  }
+}
+
+# Mapeo los reemplazos
+at$Month <- sapply(at$Month, replace_ref)
+unique(at$Month)
+
+```
+
 ### 5. split()
 
 La función `split` divide los valores de una vector (u otra estructura de datos) a partir de los grupos definidos de una variable categórica (un factor, la columna de un data.frame, etc.). Así, es posible aplicar una misma función a distintas categorías de una variable para hacer comparaciones entre ellas.
