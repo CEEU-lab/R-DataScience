@@ -13,3 +13,5 @@ Material para el dictado de clases del curso "Introduccion a la Ciencia de Datos
 4. [El lenguaje y el interprete (R base y R studio)](https://docs.google.com/presentation/d/1Tupd417nMUOO7D9ZBSnQarXhaaLkTPRY/edit?usp=sharing&ouid=111417672374799476654&rtpof=true&sd=true)
 
 5. [Guía de instalación](https://docs.google.com/presentation/d/1J1c9Phr9BfGiAUup4lBwPKsD-KEZK14t/edit?usp=drive_link)
+
+6. [Bibliografía](https://docs.google.com/document/d/1TEaqJd38eNX2deOjlVyvSl9tpdgMKOo1YfAFFfdV4Rs/edit?usp=sharing)
