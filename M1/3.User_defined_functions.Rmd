@@ -1,13 +1,111 @@
 ---
 title: "Introducción al lenguaje R"
-subtitle: "Funciones definidas por el usuario"
-output: html_notebook
+subtitle: Funciones definidas por el usuario
+output: html_document
 ---
 
-SINTAXIS. 
+En R, las funciones pueden ser tratadas como cualquier otra clase de objetos. Son un recurso muy útil para mecanizar operaciones ya que trabajan modularizando una expresión que puede ser ejecutada con parámetros variables.
 
-```{r}
-# EJEMPLO
+Las funciones también pueden ser pasadas como argumento a otras funciones (como son las funciones mapeables o looping functions).
+Una función se declara de la siguiente manera:
+
+```{=html}
+<pre>
+function (args)
+{
+  expression
+}
+</pre>
 ```
 
-DESARROLLAR
+<br>
+
+### 1. Funciones
+
+Una función se puede instanciar como cualquier otro tipo de objeto y ser llamada cuando lo deseemos. 
+
+```{r echo=TRUE}
+# defino mi funcion
+f <- function(){
+  cat("Esta funcion no hace nada")
+}
+
+# mi objeto f es de tipo ...
+class(f)
+
+# asi llamo a mi funcion
+f()
+```
+
+<br>
+
+#### 1.1 Argumentos
+
+Un argumento es un valor que incide en la manera en la que se ejecuta el cuerpo de una función. En otras palabras, es un parámetro que se utiliza para dirigir el comportamiento de mi función. Por ejemplo,
+
+```{r echo=TRUE}
+# Definimos la funcion calculadora. Esta trabaja con los parametros N y pct
+calculadora <- function(N, pct){
+  if (pct <= 100) {
+    val <- (pct*N)/100
+    valchar <- paste(as.character(pct),"%", sep="")
+    paste("El", valchar, "de", N, "es", val)
+  } else {
+    cat("Sólo calcula hasta 100%")
+  }
+}
+
+```
+
+Brevemente, lo que vemos es que nuestra función recibe dos objetos de tipo Numeric como argumentos. El primero refiere al total de una operación. El segundo a un porcentaje. Es decir, nuestra función nos devuelve el entero que representa el parametro pct respecto del total N.
+
+```{r echo=TRUE}
+# así, calculamos el x% de un N
+calculadora(N=65, pct=5)
+```
+
+<br>
+
+#### 1.2 Uso de argumentos
+
+Otra cuestión importante es que si definimos argumentos, su uso es obligatorio.
+
+```{r eval=FALSE}
+calculadora() #ERROR
+```
+
+Pero si redefinimos la función con argumentos por defecto, podemos evitar este tipo de errores. Siempre teniendo conciencia de cuáles son los valores por defecto.
+
+```{r echo=TRUE}
+# redefinimos la función con argumentos por defecto
+calculadora <- function(N=20, pct=10){
+  if (pct <= 100) {
+    val <- (pct*N)/100
+    valchar <- paste(as.character(pct),"%", sep="")
+    paste("El", valchar, "de", N, "es", val)
+  } else {
+    cat("Sólo calcula hasta 100%")
+  }
+}
+
+```
+ 
+ <br>
+ 
+ Ahora, si llamamos a nuestra función `calculadora` sin argumentos esta tomará los que fueron definidos por defecto
+ 
+```{r echo=TRUE}
+# el N y pct estaban definidos como 20 y 10 
+calculadora()
+
+```
+ 
+Los argumentos se pueden pasar a una función de manera posicional o explícita. Hasta el momento, sólo usamos esta última. Esto significa que para definir explícitamente un argumento debemos nombrarlo al momento de llamar la función en cuestión. Por ejemplo, `calculadora(N=10, pct=2)`.
+<br>
+Pero si usamos posicionales, la sintáxis sería la siguiente
+
+```{r echo=TRUE}
+# Definición posicional
+calculadora(100,10)
+```
+
