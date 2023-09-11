@@ -1,17 +1,119 @@
 ---
 title: "Práctica guiada"
-author: "PyMap"
-date: "2023-07-26"
+date: "2023-10-12"
 output: html_document
 ---
 
-## TITULO DEL REPORTE
+## Calculo de la estadía promedio de turistas internos
+
+La Encuesta de Viajes y Turismo de los Hogares permite caracterizar el turismo interno en Argentina. Entre los principales indicadores que podemos analizar se encuentran: cantidad de visitantes (turistas y excursionistas), pernoctes y estadía promedio, gasto turístico, entre otros.
+
+En el siguiente documento calcularemos la estadía promedio por trimestre y región de destino de los turistas para toda la serie disponible (2012-2023).
 
 ```{r echo=FALSE}
-source('mis_reportes/mi_indicador.R')
 
-resultados <- calculo_indicador(nombre, periodo)
-resultados
+#Seteo config global de chunks
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 
+#Cargamos paquetes
+library(tidyverse)
+```
+
+Para leer datos desde el portal de datos abiertos del SINTA podemos optar por descargarlos en la computadora o utilizar la URL del recurso. En este caso, trabajaremos con la base de microdatos de la EVyTH, para la cual tenemos una tercera opción: usar el paquete de R `evyth` de la DNMyE que nos facilita algunas funciones.
+
+```{r}
+#Opción URL
+data_evyth <- read_csv("http://datos.yvera.gob.ar/dataset/b5819e9b-5edf-4aad-bd39-a81158a2b3f3/resource/645e5505-68ee-4cfa-90f9-fcc9a4a34a85/download/evyth_microdatos.csv")
+
+#Opción paquete
+data_evyth <- evyth::descargar_microdato(anio = c(2012:2023), trimestre = c(1:4))
+```
+
+Vemos que la base tiene algunos cientos de miles de filas y más de 80 variables:
+```{r}
+#Dimensiones de la base
+dim(data_evyth)
+```
+
+Consultamos los nombres de las variables:
+```{r}
+#Nombres de variables
+colnames(data_evyth)
+```
+
+Consultamos el diccionario de la base para conocer las variables y sus valores:
+
+```{r}
+#Usando el paquete evyth
+diccionario <- evyth::diccionario
+```
+
+Como la base es un poco grande, podemos quedarnos solo con las variables y casos de nuestro interés aplicando algunas de las funciones vistas en el Módulo 2.
+
+En este caso, quedémonos con los casos correspondientes a turistas (excluyendo excursionistas) que viajaron por Argentina. También seleccionemos las columnas que nos servirán para calcular la estadía promedio.
+
+```{r}
+turistas_evyth <- data_evyth %>% 
+  filter(tipo_visitante == 1) %>% #turistas
+  select(anio, trimestre, region_destino, pondera, px07) #variables de interés
+
+#Dimensiones de la base de trabajo
+dim(turistas_evyth)
+```
+
+Ahora vamos a etiquetar la variable de `region_destino` para poder identificar cada campo.
+
+```{r}
+turistas_evyth <- evyth::crear_etiqueta(turistas_evyth, "region_destino")
+
+#Valores etiquetados
+unique(turistas_evyth$region_destino)
+```
+Antes de calcular la estadía promedio, creemos una columna de tipo fecha con el trimestre y año.
+
+```{r}
+turistas_evyth <- turistas_evyth %>% 
+  mutate(trim_date = as.Date(paste0(anio,"-",trimestre,"-01")))
+
+
+#Período
+min(turistas_evyth$trim_date)
+max(turistas_evyth$trim_date)
+
+```
+
+En un script auxiliar guardamos una función para calcular la estadía promedio a partir de la tabla que generamos. La función nos devuelve para un trimestre y región de destino específicos, una tabla con el valor de la estadía promedio.
+
+```{r}
+source("funciones.R")
+
+estadia_promedio(data = turistas_evyth, 
+                 region = "Patagonia", 
+                 fecha = "2022-01-01")
+
+```
+
+Si utilizamos un loop podemos calcularlo para muchos trimestres o regiones.
+
+```{r message=FALSE}
+trimestres <- c("2020-01-01","2021-01-01","2022-01-01","2023-01-01") #últimos primeros trimestres
+
+for (trim in trimestres) {
+  
+  print(estadia_promedio(data = turistas_evyth, 
+                 region = "Patagonia", 
+                 fecha = trim))
+}
+
+
+```
+Por último, utilicemos la función para escribir un párrafo con el indicador.
+
+```{r}
+estadia_patagonia <- estadia_promedio(data = turistas_evyth, 
+                 region = "Patagonia", 
+                 fecha = "2022-01-01")
+
+paste0("La estadía promedio en la región ", estadia_patagonia$region_destino, " en el trimestre ", estadia_patagonia$trim_date, " fue de ", round(estadia_patagonia$estadia_promedio, 1), " noches.")
 ```
 
