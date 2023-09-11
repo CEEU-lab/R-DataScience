@@ -1,0 +1,62 @@
+---
+title: "Reporte con datasets"
+author: "PyMap"
+date: "2023-09-11"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Resumen del clima (temperatura y aire)
+
+## Presentación de resultados para la comparación de temporadas
+
+### Base de datos
+
+- Tipo de **estructura de la base**
+
+```{r datastructureI}
+# Importamos nuestro script
+path <- paste(getwd(),'M1','Manipulacion-datasets.R', sep='/')
+source(path)
+
+# nuestra informacion se almacena bajo la clase list()
+dtype <- class(temporadas)
+metadata <- attributes(temporadas)
+
+dtype
+```
+
+- Nombre de los **atributos de la base**
+
+```{r datastructureII}
+metadata
+```
+
+
+### Temporada 1
+
+- Resumen de *temperatura y viento mayo-junio*
+
+```{r resumen1}
+temporadas$Summary1
+moda1 <- temporadas$Mod.Temp1
+```
+
+Durante la temporada 1, la temperatura mas frecuente fue de `r moda1`°F 
+
+### Temporada 2
+
+- Resumen de *temperatura y viento agosto-septiembre*
+
+```{r resumen2}
+temporadas$Summary2
+moda2 <- temporadas$Mod.Temp2
+```
+
+Durante la temporada 2, la temperatura mas frecuente fue de `r moda2`°F
+

@@ -3,6 +3,8 @@ library(datasets)
 
 # Instanciamos nuestra base de datos
 airquality <- datasets::airquality
+# Para mas info sobre el dataset
+# https://rpubs.com/Adutta/EDA
 
 # Renombramos filas de una columna en un data.frame
 replace_ref <- list(
