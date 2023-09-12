@@ -11,7 +11,7 @@ editor_options:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-# Resumen del clima (temperatura y aire)
+# Resumen del clima en NY (temperatura y aire)
 
 ## Presentación de resultados para la comparación de temporadas
 
