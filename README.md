@@ -16,3 +16,10 @@ Material para el dictado de clases del curso "Introduccion a la Ciencia de Datos
 
 4. [Guía de instalación](https://docs.google.com/presentation/d/1J1c9Phr9BfGiAUup4lBwPKsD-KEZK14t/edit?usp=drive_link)
 
+
+## M2
+> Presentaciones
+5. [Fuentes de datos](https://docs.google.com/presentation/d/13jODEcAo8szf-YxgeMFBcYKLU_MkNC85/edit?usp=sharing&ouid=111417672374799476654&rtpof=true&sd=true)
+
+6. [Data Wrangling + Tidyverse](https://docs.google.com/presentation/d/1c1BrbKKImzKWVJznm_cnu_L6G1xqnqkP/edit?usp=drive_link)
+
