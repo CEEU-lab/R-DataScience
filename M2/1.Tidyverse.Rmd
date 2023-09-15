@@ -1,0 +1,402 @@
+---
+title: "Introducción al lenguaje R"
+subtitle: "Tidyverse: lectura, manipulación y transformación de bases de datos"
+output: html_document
+---
+
+```{r include=FALSE}
+# Instalación: ejecutar sólo una vez
+#install.packages("tidyverse")
+
+# Invocación
+library(tidyverse)
+```
+
+```{r echo=FALSE}
+tidyverse_logo(unicode = cli::is_utf8_output())
+```
+
+<br />
+
+## 1. Lectura de archivos
+
+> **{readr}**
+
+Leemos un archivo separado por comas alojado en un bucket de GCS. Como ejemplo, vamos a utilizar una base de datos de propiedades que abre a la comunidad el [portal de Real Estate Properati](https://blog.properati.com.co/category/propetati-data/) - [ver diccionario de variables](https://github.com/PyMap/AUPY/blob/master/Modulo%203/03_4_BigQuery.ipynb)
+
+```{r echo=TRUE}
+path <- "https://storage.googleapis.com/python_mdg/carto_cursos/ar_properties.csv.gz"
+
+df <- read_csv(path,
+               col_names=TRUE)
+```
+
+```{r echo=TRUE}
+# cuanta memoria RAM necesitamos para levantarlo?
+memory_usage <- function(nrows, ncols){
+  bytes <-  nrows * ncols * 8
+  mb <- bytes/2^20
+  gb <- round(mb/100,2)
+  usage <- sprintf("%s Gb de RAM para un dataset de %s filas y %s columnas",gb,nrows,ncols)
+  return(usage)
+}
+
+memory_usage(nrows=dim(df)[1], ncols=dim(df)[2])
+```
+
+<br />
+
+## 2. Encadenamiento de operaciones
+
+> **{magrittr}**
+
+Veamos algunos ejemplos con y sin el operador `%>%.`
+
+En primer lugar, revisemos qué porcentaje de avisos de propiedades fueron publicados en los siguientes países.
+
+```{r echo=TRUE}
+# con R nativo, sin PIPE
+round(prop.table(table(df$l1)), digits=2)
+```
+
+```{r echo=TRUE}
+# con PIPE
+df$l1 %>% table() %>% prop.table() %>% round(digits=2) 
+```
+
+```{r echo=TRUE}
+# una más
+en.pct <- function(x){x*100}
+df$l1 %>% table() %>% prop.table() %>% round(digits=2) %>% en.pct()
+```
+
+<br />
+
+## 3. Funciones de {dplyr}
+
+> **select()**
+
+Para selección de columnas.
+
+```{r echo=TRUE}
+# tambien puede ser con int, slicing, etc - e.g. select(1:3)
+df_select <- df %>% select(l1,l2,l3) 
+colnames(df_select)
+```
+
+```{r echo=TRUE}
+# o sino con start/ends with y contains
+df %>% select(starts_with("l"))
+df %>% select(contains("lat"))
+```
+<br />
+
+> **filter()**
+
+Para quedarnos con casos que cumplan determinadas condiciones.
+
+```{r echo=TRUE}
+# un filtro sencillo
+df_filter <-  df %>% filter(df$l1=="Argentina")
+unique(df_filter$l1)
+```
+
+```{r echo=TRUE}
+# o quedarme con una u otra categoria
+df_filter1 <- df %>% filter(df$l1=="Argentina" | df$l1=="Uruguay")
+unique(df_filter1$l1)
+```
+
+```{r echo=TRUE}
+df_filter2 <- df %>% filter(l1 %in% c("Argentina","Uruguay"))
+unique(df_filter1$l1)
+```
+
+
+```{r echo=TRUE}
+# algo mas completo
+df_multif <- df %>% select(l1,l2,surface_covered,price) %>% 
+  filter(l1 == "Argentina", surface_covered >100) 
+
+unique(df_multif$surface_covered > 100)
+```
+
+```{r echo=TRUE}
+head(df_multif)
+```
+
+<br />
+
+> **mutate()**
+
+Para crear nuevas columnas a partir de las prexistentes.
+Por ejemplo, podemos calcular la superficie descubierta.
+
+```{r echo=TRUE}
+df %>% select(starts_with("sur")) %>% 
+  filter(df$l1=="Argentina") %>%  
+  mutate(surface_uncovered= surface_total - surface_covered)
+```
+
+O recodificar una variable existentes.
+
+<br />
+
+> **mutate() + case_when()**
+
+```{r echo=TRUE}
+# Por rango de precios
+op1 <- df %>% select(c(surface_total, price, currency)) %>% 
+  filter(df$operation_type == "Alquiler" & df$currency=="ARS") %>% 
+  mutate(rango_precios = case_when(price <= 50000 ~ "bajo",
+                                   price >50000 & price<= 80000 ~ "medio",
+                                   price >80000 ~ "alto"))
+
+prop.table(table(op1$rango_precios)) %>% round(2)
+```
+
+
+
+```{r echo=TRUE}
+# O por tamaño
+op2 <- df %>% select(c(surface_total, price, currency)) %>% 
+  filter(df$operation_type == "Alquiler" & df$currency == "ARS") %>%
+  mutate(sup_rango = case_when(surface_total %in% (0:35)~"chico",
+                               surface_total %in% (36:52)~"mediano",
+                               surface_total > 52~"grande"))
+
+prop.table(table(op2$sup_rango)) %>% round(2)
+```
+
+También podemos reemplazar filas de una columna.
+
+<br />
+
+> **mutate() + ifelse() **
+
+```{r echo=TRUE}
+# podemos cambiar de ARG a ARS con pipe
+con.pipe <- df %>% 
+  mutate(currency=ifelse(currency == "ARG", "ARS", currency)) %>% 
+  filter(currency=="ARS") %>% 
+  select(currency)
+
+unique(con.pipe$currency)
+```
+
+<br />
+
+> R Base `which()`
+
+```{r echo=TRUE}
+# o podemos cambiar de ARS a ARG sin el pipe
+sin.pipe <- df
+sin.pipe$currency[which(sin.pipe$currency=="ARS")] <- "ARG"
+
+sin.pipe %>% filter(currency == "ARG") %>% select(currency) %>% table() 
+```
+
+<br />
+
+¿Por qué usar el which en R base? - [Una forma rápida de excluir NAs cuando no se cumple una condición - ver digresión](https://stackoverflow.com/questions/19430841/na-values-in-indexing-data-frame).
+
+```{r}
+# No vemos NAs
+unique(df[which(df$currency=="ARS"), "currency"])
+```
+
+<br />
+
+> **rename()**
+
+Para renombrar columnas
+
+```{r echo=TRUE}
+df %>% rename("pais"="l1") %>% select("pais")
+```
+
+<br />
+
+> **summarise()**
+
+Para construir estadísticos de resumen.
+
+```{r ECHO=TRUE}
+# se aprecia una alta dispersión, lógica de no analizar por tipo de propiedad u operación
+df %>% 
+  summarise(m2_ofertados = sum(price, na.rm=TRUE),
+            precio_medio = mean(price, na.rm=TRUE),
+            precio_desvio = sd(price,na.rm=TRUE),
+            precio_cv = precio_desvio/precio_medio*100)
+
+
+```
+
+<br />
+
+> **groupby()**
+
+Muy común es la combinación ´group_by´ + ´summarise´ para obtener resultados por grupo.
+
+```{r}
+resultadosxpais <- df %>%
+  select(currency,price,l1) %>% 
+  filter(df$currency == "USD") %>% 
+  mutate(l1 = case_when(l1=="Estados Unidos"~"USA", TRUE ~ l1)) %>% 
+  group_by(l1) %>% 
+  summarise(avisos_totales=n(), precio_m2=mean(price)) %>% 
+  arrange(-avisos_totales)
+
+resultadosxpais
+```
+Al pasarle `TRUE ~ l1` evitamos que todos los casos que no sean `Estados Unidos` resulten clasificados como `NA`. Pueden quitarlo y comprobarlo ustedes.
+
+<br />
+
+## 4. Funciones de tidyr
+
+Estas funciones ayudan a ajustarse al esquema `tidy`(observaciones en filas, variables en columnas). Permiten cambiar de formato y unificar columnas, entre otras 
+
+<br />
+
+> **pivot_longer()**
+
+Para transformar columnas en filas
+
+```{r echo=TRUE}
+long_df <- df %>% select(c(l1,price)) %>% 
+              group_by(l1) %>% 
+              summarise(min_price=min(price, na.rm=TRUE),
+                        max_price=max(price, na.rm=TRUE),
+                        mean_price=mean(price, na.rm = TRUE))%>% 
+              select(l1,min_price,max_price,mean_price) %>% 
+              pivot_longer(cols = c(min_price,max_price,mean_price),
+                           names_to = "variable",
+                           values_to = "valor")
+
+long_df
+```
+
+<br />
+
+> **pivot_wider()**
+
+Para transformar filas en columnas
+
+```{r echo=TRUE}
+long_df %>% 
+  pivot_wider(names_from="variable",
+              values_from="valor")
+```
+<br />
+
+> **unite()**
+
+Para combinar dos columnas en una
+
+```{r echo=TRUE}
+df %>% unite("operacion.prop", 
+             c("operation_type","property_type"),
+             sep="-") %>% 
+  filter(df$operation_type == "Alquiler") %>% 
+  select(operacion.prop) %>% 
+  table() %>% prop.table() %>% round(2) %>% 
+  data.frame() %>% 
+  arrange(-Freq)
+```
+
+<br />
+
+## 5. `dplyr` + `tidyr`: unión de tablas
+
+> **mutating joins**
+
+Existen cuatro tipos de uniones o joins entre tablas:
+
+- *Inner join*
+Preserva unicamente las filas de `x` que coinciden con las de `y` en una misma llave o columna.
+
+<br />
+
+Creemos una nueva tabla para ver cómo funciona. Por ejemplo, podemos ver la cantidad de avisos publicados en dos días de fuerte actividad (digamos, viernes y sábados) para los cuatro países que figuran en la base de datos.
+```{r}
+diaxpais <- df %>% mutate(diapub = weekdays(strptime(df$start_date, "%Y-%m-%d"))) %>% 
+  group_by(l1, diapub) %>%
+  count() %>% 
+  pivot_wider(names_from = diapub, values_from = n) %>% 
+  select("viernes", "sábado")
+  
+  
+diaxpais
+```
+
+<br />
+
+Como se puede observar, al haber cambiado `Estados Unidos` por `USA` en nuestra tabla `x` de resultados por país, la llave `l1` ya no coincide con la de la tabla `y` de resultados por día.
+```{r}
+inner_join(resultadosxpais, diaxpais, by="l1")
+```
+
+<br />
+
+- *Outer joins*
+
+`left_join()`: preserva todas las observaciones en la tabla `x`.
+
+```{r echo=TRUE}
+left_join(resultadosxpais, diaxpais, by="l1")
+```
+
+<br />
+
+`right_join()`: preserva todas las observaciones en la tabla `y`.
+```{r echo=TRUE}
+right_join(resultadosxpais, diaxpais, by="l1")
+```
+
+<br />
+
+`full_join()`: preserva todas las observaciones en las tabla `x` e `y`.
+```{r echo=TRUE}
+full_join(resultadosxpais, diaxpais, by="l1")
+```
+
+<br />
+
+Recuperamos nuestra tabla de resultados por país y volvemos a cambiar el nombre `USA` a `Estados Unidos`.
+```{r echo=TRUE}
+resultadosxpais[resultadosxpais$l1=="USA",'l1'] <- "Estados Unidos"
+todoxpais <- full_join(resultadosxpais, diaxpais, by="l1")
+
+todoxpais
+```
+
+Ahora sí, conseguimos una tabla de resultados más prolija. 
+
+<br />
+
+`dplyr` también cuenta con los métodos `bind_rows()` y `bind_cols()` para unir marcos de datos tanto en sentido horizontal como vertical. La misma documentación sugiere utilizar los métodos de unión o joins en lugar del `bind_cols` para unir tablas por columna. Por eso, solamente vamos a ver cómo funciona el método de unión por filas.
+
+<br />
+
+> **`bind_rows()` o concatenación de tablas for fila**
+
+Para esta operación contamos con el método `bind_rows`. Imaginemos por un momento que contamos con información sobre las propiedades publicadas en otros países.
+
+```{r}
+fake <- data.frame("l1"=c("Chile","Paraguay"), 
+                   "avisos_totales"=c(94, 72), 
+                   "precio_m2"=c(174000, 87000),
+                   "viernes"=c(18,32),
+                   "sábado"=c(12,24))
+
+fake
+```
+El nuevo dataframe respeta la estructura de nuestra tabla de resultados. Eso nos asegura que las dos tablas se van a unir correctamente en sentido de las columnas.
+```{r}
+# agregamos nuevos países
+todoxpais %>% bind_rows(fake)
+```
+
+
+
