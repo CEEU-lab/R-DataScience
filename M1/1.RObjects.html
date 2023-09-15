@@ -354,12 +354,12 @@ display: none;
 </div>
 
 
-<p><br></p>
+<p><br /></p>
 <div id="atomic-classes" class="section level3">
 <h3>1. <strong>“Atomic” classes</strong></h3>
-<p><br> En R base se pueden distinguir 3 tipos de clases básicas de
+<p>En R base se pueden distinguir 3 tipos de clases básicas de
 objetos.</p>
-<p><br></p>
+<p><br /></p>
 <blockquote>
 <p><strong>Numeric</strong></p>
 </blockquote>
@@ -402,7 +402,7 @@ Re(1+2i)</code></pre>
 <pre class="r"><code># y una imaginaria
 Im(1+2i)</code></pre>
 <pre><code>## [1] 2</code></pre>
-<p><br></p>
+<p><br /></p>
 <blockquote>
 <p><strong>Character</strong></p>
 </blockquote>
@@ -413,7 +413,7 @@ class(mi_ciudad)</code></pre>
 <pre><code>## [1] &quot;character&quot;</code></pre>
 <pre class="r"><code>toupper(mi_ciudad)</code></pre>
 <pre><code>## [1] &quot;BUENOS AIRES&quot;</code></pre>
-<p><br></p>
+<p><br /></p>
 <blockquote>
 <p><strong>Logical (o booleanos)</strong></p>
 </blockquote>
@@ -424,13 +424,13 @@ de alguna condición.</p>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>2&lt;5</code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<p><br></p>
+<p><br /></p>
 </div>
 <div id="estructuras-nativas-de-datos" class="section level3">
 <h3>2. Estructuras nativas de datos</h3>
 <p>En R base, el <code>vector</code> es la colección fundamental
 alrededor de la que se forman otras estructuras de datos.</p>
-<p><br></p>
+<p><br /></p>
 <blockquote>
 <p><strong>Vectores</strong></p>
 </blockquote>
@@ -463,7 +463,7 @@ num_vec</code></pre>
 num_vec[2] = 8+3
 num_vec</code></pre>
 <pre><code>## [1]  0 11  0  0  0</code></pre>
-<p><br></p>
+<p><br /></p>
 <blockquote>
 <p><strong>Matrices</strong></p>
 </blockquote>
@@ -514,7 +514,7 @@ cbind(x,y)</code></pre>
 ## [1,] 1 4
 ## [2,] 2 5
 ## [3,] 3 6</code></pre>
-<p><br></p>
+<p><br /></p>
 <blockquote>
 <p><strong>Factors</strong></p>
 </blockquote>
@@ -542,7 +542,7 @@ unclass(meses_factor)</code></pre>
 <pre><code>##  [1] 1 2 2 3 3 3 4 4 1 5 2
 ## attr(,&quot;levels&quot;)
 ## [1] &quot;Enero&quot;   &quot;Febrero&quot; &quot;Marzo&quot;   &quot;Abril&quot;   &quot;Mayo&quot;</code></pre>
-<p><br></p>
+<p><br /></p>
 <blockquote>
 <p><strong>Vectores y coerción de objetos</strong></p>
 </blockquote>
@@ -565,7 +565,7 @@ as.character(c(924,999))</code></pre>
 <pre class="r"><code># factor como numeric
 as.numeric(factor(c(&quot;Hombre&quot;,&quot;Mujer&quot;)))</code></pre>
 <pre><code>## [1] 1 2</code></pre>
-<p><br></p>
+<p><br /></p>
 <blockquote>
 <p><strong>Listas</strong></p>
 </blockquote>
@@ -609,6 +609,7 @@ l_num</code></pre>
 ## 
 ## [[3]]
 ## NULL</code></pre>
+<p><br /></p>
 <blockquote>
 <p><strong>DataFrames</strong></p>
 </blockquote>
@@ -630,6 +631,7 @@ df</code></pre>
 <pre><code>## [1] 2</code></pre>
 <pre class="r"><code>ncol(df)</code></pre>
 <pre><code>## [1] 3</code></pre>
+<p><br /></p>
 <p>En R base, un data.frame se puede indexar de las siguientes maneras
 …</p>
 <pre class="r"><code># filtramos por filas
@@ -664,6 +666,7 @@ attributes(df)</code></pre>
 attributes(l)</code></pre>
 <pre><code>## $names
 ## [1] &quot;&quot;    &quot;&quot;    &quot;MTX&quot;</code></pre>
+<p><br /></p>
 <p>Y cada estructura de datos cuenta con una forma de setearlo. En
 dataframes y matrices, también contamos con la posibilidad de definir
 los nombres de las filas y de las columnas.</p>
@@ -703,6 +706,7 @@ m</code></pre>
 <pre><code>##   e f
 ## g 1 3
 ## h 2 4</code></pre>
+<p><br /></p>
 </div>
 <div id="subsetear-objetos" class="section level3">
 <h3>3. Subsetear Objetos</h3>
@@ -718,6 +722,7 @@ necesariamente es de la misma clase lista o dataframe.</p></li>
 <li><p>El operador <code>$</code>. Extrae elementos de una lista o
 dataframe a partir de su nombre literal.</p></li>
 </ul>
+<p><br /></p>
 <blockquote>
 <p>Subseteo de <strong>vectores</strong></p>
 </blockquote>
@@ -741,6 +746,7 @@ my_vec[is_palermo] </code></pre>
 starts.with.C &lt;- grepl(&quot;^C&quot;, my_vec)
 my_vec[starts.with.C] </code></pre>
 <pre><code>## [1] &quot;C1012&quot;</code></pre>
+<p><br /></p>
 <blockquote>
 <p>Subseteo de <strong>matrices</strong></p>
 </blockquote>
@@ -764,6 +770,7 @@ x[2,]</code></pre>
 <pre class="r"><code># o la primera columna
 x[,1]</code></pre>
 <pre><code>## [1] 1 2</code></pre>
+<p><br /></p>
 <blockquote>
 <p>Subseteo de <strong>listas</strong></p>
 </blockquote>
@@ -799,6 +806,7 @@ x[c(1,2)]</code></pre>
 ## 
 ## $consumo
 ## [1] 0.6</code></pre>
+<p><br /></p>
 <blockquote>
 <p>Subseteo de <strong>valores nulos</strong></p>
 </blockquote>
@@ -816,6 +824,7 @@ print(!nulos)</code></pre>
 <pre class="r"><code># y lo usamos para subsetear el vector
 y[!nulos]</code></pre>
 <pre><code>## [1] &quot;C1012&quot; &quot;AB776&quot; &quot;Z213&quot;</code></pre>
+<p><br /></p>
 <p>Con <code>complete.cases</code> podemos hacer esta misma operación
 con múltiples vectores</p>
 <pre class="r"><code>z &lt;- c(0.64, NA, 0.23, NA, 0.36)
@@ -824,6 +833,7 @@ print(out.nulos)</code></pre>
 <pre><code>## [1]  TRUE FALSE  TRUE FALSE  TRUE</code></pre>
 <pre class="r"><code>y[out.nulos]</code></pre>
 <pre><code>## [1] &quot;C1012&quot; &quot;AB776&quot; &quot;Z213&quot;</code></pre>
+<p><br /></p>
 <p>O mismo con un dataframe</p>
 <pre class="r"><code># creamos un df con los vectores y, z
 df.cons &lt;- data.frame(y,z)
@@ -841,6 +851,7 @@ df.cons[out.nulos,]</code></pre>
 ## 1     C1012    0.64
 ## 3     AB776    0.23
 ## 5      Z213    0.36</code></pre>
+<p><br /></p>
 </div>
 <div id="almacenar-objetos" class="section level3">
 <h3>4. Almacenar objetos</h3>
@@ -867,6 +878,7 @@ dget(&#39;../data/data.R&#39;)</code></pre>
 <pre><code>##      EDAD   ING SEX
 ## IDX1   18 35000   V
 ## IDX2   24 54000   M</code></pre>
+<p><br /></p>
 <p><code>dump()</code> es una buena alternativa para parsear distintos
 objetos al mismo tiempo.</p>
 <pre class="r"><code>columnas &lt;- colnames(df)
@@ -887,6 +899,7 @@ str(df)</code></pre>
 <p>Hasta ahora vimos que con <code>class()</code> revisamos de qué tipo
 es el objeto. Con <code>attributes()</code> podemos listar los atributos
 de nuestro objeto. Y con <code>str()</code> vemos su estructura.</p>
+<p><br /></p>
 </div>
 <div id="dates-y-times" class="section level3">
 <h3>5. Dates y Times</h3>
@@ -909,9 +922,10 @@ unclass(fecha)</code></pre>
 cuenta con otro tipo de representación.</p>
 <pre class="r"><code>ahora &lt;- Sys.time() 
 ahora</code></pre>
-<pre><code>## [1] &quot;2023-09-08 13:17:26 -03&quot;</code></pre>
+<pre><code>## [1] &quot;2023-09-15 15:29:42 -03&quot;</code></pre>
 <pre class="r"><code>class(ahora)</code></pre>
 <pre><code>## [1] &quot;POSIXct&quot; &quot;POSIXt&quot;</code></pre>
+<p><br /></p>
 <p>A su vez, con la clase <code>POSIXlt</code> podemos instanciar
 objetos con metadata muy útil.</p>
 <pre class="r"><code># instanciamos un objeto de tipo POSIXlt
@@ -935,6 +949,7 @@ names(unclass(ahora_))</code></pre>
 <pre class="r"><code># a los que podemos acceder de la siguiente manera
 ahora_$wday</code></pre>
 <pre><code>## [1] 5</code></pre>
+<p><br /></p>
 <p>Si las fechas se encuentran escritas en un formato diferente, podemos
 acomodarlas con la función <code>strptime()</code>. Esta toma como
 parámetro un vector de tipo character y devuelve un obeto de tipo
@@ -948,6 +963,7 @@ fechaPOS</code></pre>
 <pre><code>## [1] &quot;2010-03-03 10:45:00 -03&quot; &quot;2007-10-07 18:20:00 -03&quot;</code></pre>
 <pre class="r"><code>class(fechaPOS)</code></pre>
 <pre><code>## [1] &quot;POSIXlt&quot; &quot;POSIXt&quot;</code></pre>
+<p><br /></p>
 <p>También es posible hacer operaciones de suma y resta.</p>
 <pre class="r"><code># hay que tener cuidado, las clases de objetos deben coincidir
 fecha - fechaPOS[2]
