@@ -23,3 +23,6 @@ Material para el dictado de clases del curso "Introduccion a la Ciencia de Datos
 
 6. [Data Wrangling + Tidyverse](https://docs.google.com/presentation/d/1c1BrbKKImzKWVJznm_cnu_L6G1xqnqkP/edit?usp=drive_link)
 
+## M3
+> Presentaciones
+7. [Visualizaciones con ggplot2](https://docs.google.com/presentation/d/1z27A_0mCP0BdswqKm4XATCweWR3gJQvI/edit?usp=drive_link&ouid=111417672374799476654&rtpof=true&sd=true)
