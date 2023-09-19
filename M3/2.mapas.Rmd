@@ -1,0 +1,276 @@
+---
+title: "Introducción al lenguaje R"
+subtitle: "Manejo de información geográfica"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Las librerías y la base de datos
+
+Primero invocamos a `tidyverse` para utilizar el método `read_csv` del paquete `readr`. Luego, volvemos a cargar nuestro set de datos de propiedades inmobiliarias.
+
+<br />
+
+```{r base}
+library(tidyverse)
+library(sf)
+
+path <- "https://storage.googleapis.com/python_mdg/carto_cursos/ar_properties.csv.gz"
+
+df <- read_csv(path,
+               col_names=TRUE)
+```
+
+```{r}
+caba <- df %>% filter(l2 == "Capital Federal", operation_type=="Alquiler", currency=="ARS",
+                      property_type=="Departamento", surface_covered > 0, surface_covered < 500, price > 0)
+
+# Agregamos algunas columnas y filtramos nuestros datos
+caba_ <- caba %>%
+  mutate(datetime = strptime(caba$start_date, "%Y-%m-%d"), 
+         yearpub=year(datetime), 
+         monthpub=months(datetime)) %>% 
+  filter(caba$price < 350000)
+
+# Creamos un df de etiquetas
+months_df <- data.frame(monthpub=c("enero","febrero","marzo","abril", "mayo","junio","julio",
+                       "agosto","septiembre","octubre","noviembre","diciembre"),
+                        monthcod=c("01-01","02-01","03-01","04-01","05-01",
+                                   "06-01","07-01","08-01","09-01","10-01","11-01","12-01"))
+
+# Terminamos de emprolijar el set de datos de alquileres en buenos aires
+caba_time <- left_join(caba_, months_df, by="monthpub") %>% 
+  unite("periodPubChr", c("yearpub", "monthcod"), sep="-", remove = FALSE) %>% 
+  mutate(periodPub=as.Date(periodPubChr,format='%Y-%m-%d')) 
+```
+
+## 2. Geometrías y proyecciones: la información georreferenciada
+
+Los datos geográficos o espaciales suelen agruparse en dos grandes tipos: `ráster` y `vectorial`.
+
+Mientras los primeros se caracterizan por disponer la información en una grilla codificada en pixeles con valores numéricos (comunmente utilizados para el procesaimiento de imágnes satelitales), los últimos se distinguen por la presencia de un conjunto de objetos geográficos de distinto tipo: **líneas**, **puntos** y **polígonos**.
+
+<br />
+
+<p align="center">
+  <img src="https://michaelminn.net/tutorials/python-areas/2019-points-lines-polygons.png" alt="Geoms"/>
+</p>
+
+<br />
+
+A continuación, vamos a visualizar nuestra información de propiedades. Es importante aclarar que, este dataframe todavía no cuenta con `geometrías` de tipo espacial ...
+
+```{r}
+ggplot(data=caba_time, mapping=(aes(x=lon, y=lat))) + geom_point()
+```
+
+<p align="left">
+
+<img src="https://r-spatial.github.io/sf/logo.png" alt="SF" width="60" height="60"/>
+
+<p/>
+
+Para hacer la transformación a un objeto geográfico vamos a usar la librería `sf`. El paquete [simple features](https://cengel.github.io/R-spatial/intro.html#the-sf-package) brinda una serie de recursos útiles para acceder y manipular información espacial. 
+
+
+```{r}
+# Convertimos nuestro set de datos en un objeto espacial
+caba.sf <- caba_time %>% drop_na(lon,lat)  %>% st_as_sf(coords = c("lon", "lat"), crs = 4326)
+
+coords.sf <- st_coordinates(caba.sf)
+propiedades <- caba.sf %>% 
+  mutate(lon = coords.sf[, "X"], lat = coords.sf[, "Y"]) 
+```
+
+<br />
+
+Ahora que convertimos nuestros puntos, vamos a representarlos en un eje de coordenadas latitud y longitud.
+
+```{r}
+ggplot(propiedades) + geom_sf()
+```
+
+<br />
+
+Evidentemente, nuestra base está algo sucia y propiedades que dicen estar en la Ciudad de Buenos Aires tienen coordenadas que están por fuera de su territorio. Para remediar esto, vamos a hacer nuestra primera operación espacial: un join de geometrías. 
+
+En términos muy simples, lo que vamos a hacer a continuación es identificar todos aquellos puntos que caen dentro de los polígonos de los barrios de la Ciudad. Esto, como mecanismo para filtrar aquellas propiedades que están correctamente georreferenciadas.
+
+```{r}
+# Cargamos la capa de barrios
+path <- 'https://cdn.buenosaires.gob.ar/datosabiertos/datasets/ministerio-de-educacion/barrios/barrios.geojson' 
+barrios <- read_sf(path)
+```
+
+```{r}
+# y vemos que contamos con algunos polígonos
+ggplot(barrios) + geom_sf()
+```
+
+<br />
+
+Antes de realizar esta operación debemos repasar un concepto importante en el campo de los datos espaciales. Su **sistema de coordenadas** o **proyección**. En inglés esto suele denominarse `CRS` o `Coordinate Reference System`.
+
+Un mapa es, básicamente, una representación de la Tierra en superficie plana. Para poder establecer esta correspondencia, es que existen los sistemas de proyección cartográfica. Para traducir en un plano una superficie que sigue una forma esférica o elipsoidal. Y para la cual, resulta indispensable llevar a cabo algún tipo de transformación.  
+
+```{r}
+# Vemos el objeto enriquecido CRS
+st_crs(barrios)
+```
+
+<br />
+
+Existen distintas maneras de ajustar un elipsoide a un plano. Aunque ninguna de ellas sin generar algún tipo de distorsión en la forma que buscamos adaptar. También por eso es que existen distintas proyecciones. Porque cada una conserva mejor cierto tipo de propiedad antes que otra. Lo que significa que alguna pueda resultar mejor según el lugar y la transformación que deba sufrir el globo para representarlo. Tal es así que algunos lugares desarrollan sus propias proyecciones con los fines de aminorar distorsiones en ángulos, distancias, etc..
+
+Como no es nuestro objetivo adentrarnos demasiado en cómo se construye un sistema de coordenadas, vamos a simplificar un poco y a decir que el sistema de coordenadas geográfico universal es el `4326`. Cada ciudad o parte de la tierra puede tener su propio sistema de proyección elaborado en base a un datum que permite modelar la forma de la tierra. Los sistemas proyectados no serán objeto de este notebook.
+
+<br />
+
+<p align="center">
+  <img src="https://drive.google.com/uc?id=1nm__KTmyByPLZwc7mmhdR1dCTN95bJU1" alt="CRS Sys"/>
+</p>
+
+<br />
+
+A continuación, vamos a verificar que nuestras capas de puntos y polígonos se encuentren representadas en el mismo sistema de coordenadas.
+
+```{r}
+if (st_crs(propiedades) == st_crs(barrios)) {
+  cat("Ambas bases tienen el mismo sistema de proyección de coordenadas")
+} else {
+  # reproyectamos la capa
+  data.sf <- st_transform(propiedades, st_crs(barrios))
+}
+```
+
+Finalmente hacemos nuestro join espacial!
+
+```{r}
+# Hacemos un join espacial y omitimos los casos que no coincidieron
+propiedades.caba <- st_join(propiedades, barrios) %>% 
+  drop_na(BARRIO, COMUNA) %>% 
+  mutate(ARSxM2 = price/surface_total) %>% 
+  drop_na(ARSxM2)
+```
+
+Y contruimos una primera visualización. Como se puede apreciar, estamos utilizando el método `geom_sf`. Este es bastante práctico, primeramente porque autodetecta la geometría con la que estamos trabajando. Asimismo, podemos ver que este nos permite apilar distintas capas.
+
+```{r}
+# Departamentos en alquiler en CABA
+ggplot() + 
+  geom_sf(data = barrios) + 
+  geom_sf(data = propiedades.caba, 
+          color='orange',
+          size= 0.5) 
+```
+
+<br />
+
+```{r}
+# Ahora definimos el tamaño de los puntos
+ggplot(propiedades.caba) +
+  geom_sf(data=barrios) +
+  geom_sf(size = (propiedades.caba$ARSxM2)*0.005, color = "orange",
+          shape = 21, stroke = 0.05) 
+```
+
+<br />
+
+También podemos customizar la escala de colores de los puntos.
+
+```{r}
+ggplot(propiedades.caba) +
+  geom_sf(data=barrios) +
+  geom_sf(aes(fill=ARSxM2), size=2, color = "black", shape = 21, stroke = 0.05) +
+  scale_fill_gradientn(colours = c("yellow","red", "blue"))
+```
+
+<br />
+
+También el tamaño de los puntos ...
+
+```{r warning=FALSE}
+propiedades.caba %>% drop_na(bathrooms) %>% 
+  drop_na(ARSxM2) %>% 
+ggplot() + 
+geom_sf(data = barrios) +
+geom_sf(data = propiedades.caba) +
+geom_point(aes(color = ARSxM2, 
+               size = bathrooms, 
+               geometry = geometry),
+           stat = "sf_coordinates") +
+scale_color_viridis_c(option = "turbo") +
+theme(legend.position = "right") 
+```
+
+<br />
+
+Salgamos un poco de la representación espacial y veamos el rango de precios por barrio o comuna para tener una idea de cuáles son las zonas más caras y más baratas para alquilar en la Ciudad de Buenos Aires.
+
+```{r}
+ggplot(propiedades.caba, aes(x=COMUNA, y=price)) + 
+  geom_bar(position='dodge', stat='summary', fun='mean', color="green")
+```
+
+<br />
+
+Ahora veamos nuestros resultados de manera ordenada.
+
+```{r}
+precios.comuna <- propiedades.caba %>% group_by(COMUNA) %>% 
+  summarise(precio_medio=mean(price)) %>% 
+  arrange(precio_medio) %>% select(COMUNA, precio_medio)
+
+ggplot(precios.comuna, aes(x=reorder(COMUNA, +precio_medio), y=precio_medio, label=precio_medio)) + 
+  geom_bar(stat = 'identity', fill="green", color="blue") +
+  xlab("Comuna") + ylab("precio de alquiler en $ARS") +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+
+<br />
+
+Como se puede apreciar, utilizamos el argumento `stat` en `geom_bar`. A este le pasamos el valor [identity](https://stackoverflow.com/questions/59008974/why-is-stat-identity-necessary-in-geom-bar-in-ggplot). El mismo sirve para saltearnos la sumarización.
+
+<br />
+
+```{r}
+precios.comuna <- propiedades.caba %>% 
+  group_by(COMUNA) %>% 
+  summarize(avg_price=mean(ARSxM2)) %>% 
+  select(COMUNA, avg_price)
+
+barrios.precios <- st_join(barrios, precios.comuna)
+
+ggplot() +
+  geom_sf(data=barrios.precios, aes(fill=avg_price)) +
+  theme_bw() +
+  scale_fill_viridis_c("ARS$")+
+  ggtitle("Precio medio del m2 en alquiler por comuna")
+```
+
+<br />
+
+Hagamos un último análisis y creemos una etiqueta de zonas para ver cómo evolucionó el precio del alquiler en cada una de ellas durante el período estudiado.
+
+```{r}
+zonas <- data.frame(COMUNA = seq(1,15), 
+                    ZONA = c("Centro", "Norte", "Centro", "Sur", "Centro", "Centro", "Centro", "Sur", 
+                             "Centro", "Centro", "Centro", "Norte", "Norte", "Norte", "Norte"))
+
+propiedades.caba <- left_join(propiedades.caba, zonas, by='COMUNA')
+
+propiedades.caba %>% 
+  group_by(ZONA, periodPub) %>% 
+  mutate(avg_price=mean(price)) %>% 
+  ggplot(aes(periodPub, avg_price)) +
+  geom_line(aes(color=ZONA)) +
+  geom_point(aes(color = ZONA), shape = "*", size = 5) + 
+  xlab("") + ylab("precio del alquiler en $ARS")
+```
+
+
+
+
