@@ -16,7 +16,7 @@ Primero invocamos a `tidyverse` para utilizar el método `read_csv` del paquete 
 
 <br />
 
-```{r base}
+```{r}
 library(tidyverse)
 path <- "https://storage.googleapis.com/python_mdg/carto_cursos/ar_properties.csv.gz"
 
@@ -59,6 +59,7 @@ Supongamos que queremos ver cuánto crece el precio de un departamento en alquil
 ggplot(data = caba, mapping = aes(x = surface_covered, y = price))  + 
   geom_point() 
 ```
+
 <br />
 
 ### Series de tiempo
