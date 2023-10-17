@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-10-12" />
+<meta name="date" content="2023-10-19" />
 
 <title>Práctica guiada</title>
 
@@ -350,48 +350,35 @@ display: none;
 
 
 <h1 class="title toc-ignore">Práctica guiada</h1>
-<h4 class="date">2023-10-12</h4>
+<h4 class="date">2023-10-19</h4>
 
 </div>
 
 
-<div id="calculo-de-la-estadía-promedio-de-turistas-internos" class="section level2">
-<h2>Calculo de la estadía promedio de turistas internos</h2>
+<div id="cálculo-de-la-estadía-promedio-de-turistas-internos" class="section level2">
+<h2>Cálculo de la estadía promedio de turistas internos</h2>
 <p>La Encuesta de Viajes y Turismo de los Hogares permite caracterizar
 el turismo interno en Argentina. Entre los principales indicadores que
 podemos analizar se encuentran: cantidad de visitantes (turistas y
 excursionistas), pernoctes y estadía promedio, gasto turístico, entre
 otros.</p>
 <p>En el siguiente documento calcularemos la estadía promedio por
-trimestre y región de destino de los turistas para toda la serie
-disponible (2012-2023).</p>
-<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
-## ✔ ggplot2 3.4.0     ✔ purrr   1.0.1
-## ✔ tibble  3.2.1     ✔ dplyr   1.1.1
-## ✔ tidyr   1.3.0     ✔ stringr 1.5.0
-## ✔ readr   2.1.3     ✔ forcats 0.5.2</code></pre>
-<pre><code>## Warning: package &#39;tibble&#39; was built under R version 4.2.3</code></pre>
-<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 4.2.3</code></pre>
-<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+trimestre y región de destino de los turistas.</p>
 <p>Para leer datos desde el portal de datos abiertos del SINTA podemos
 optar por descargarlos en la computadora o utilizar la URL del recurso.
 En este caso, trabajaremos con la base de microdatos de la EVyTH, para
 la cual tenemos una tercera opción: usar el paquete de R
 <code>evyth</code> de la DNMyE que nos facilita algunas funciones.</p>
-<pre><code>## Rows: 446794 Columns: 88
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr  (6): localidad_destino, codigo_2001, codigo_2010, cod_prov_2010, cod_de...
-## dbl (82): id_hogar, id_viajes, miembro, anio, trimestre, region_origen, aglo...
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>#Opción URL
+data_evyth &lt;- read_csv(&quot;http://datos.yvera.gob.ar/dataset/b5819e9b-5edf-4aad-bd39-a81158a2b3f3/resource/645e5505-68ee-4cfa-90f9-fcc9a4a34a85/download/evyth_microdatos.csv&quot;)</code></pre>
 <p>Vemos que la base tiene algunos cientos de miles de filas y más de 80
 variables:</p>
-<pre><code>## [1] 446794     88</code></pre>
+<pre class="r"><code>#Dimensiones de la base
+dim(data_evyth)</code></pre>
+<pre><code>## [1] 455535     88</code></pre>
 <p>Consultamos los nombres de las variables:</p>
+<pre class="r"><code>#Nombres de variables
+colnames(data_evyth)</code></pre>
 <pre><code>##  [1] &quot;id_hogar&quot;              &quot;id_viajes&quot;             &quot;miembro&quot;              
 ##  [4] &quot;anio&quot;                  &quot;trimestre&quot;             &quot;region_origen&quot;        
 ##  [7] &quot;aglomerado_origen&quot;     &quot;region_destino&quot;        &quot;provincia_destino&quot;    
@@ -424,6 +411,17 @@ variables:</p>
 ## [88] &quot;j_cond_act&quot;</code></pre>
 <p>Consultamos el diccionario de la base para conocer las variables y
 sus valores:</p>
+<pre class="r"><code>#Usando el paquete evyth
+diccionario &lt;- evyth::diccionario
+
+head(diccionario)</code></pre>
+<pre><code>##        variable opcion                               descripcion
+## 1      id_hogar     NA Código de identificación único de hogares
+## 2     id_viajes     NA  Código de identificación único de viajes
+## 3       miembro     NA             Número de miembro en el hogar
+## 4          anio     NA                                       Año
+## 5     trimestre     NA                                 Trimestre
+## 6 region_origen     NA            Región de residencia del hogar</code></pre>
 <p>Como la base es un poco grande, podemos quedarnos solo con las
 variables y casos de nuestro interés aplicando algunas de las funciones
 vistas en el Módulo 2.</p>
@@ -431,12 +429,23 @@ vistas en el Módulo 2.</p>
 (excluyendo excursionistas) que viajaron por Argentina. También
 seleccionemos las columnas que nos servirán para calcular la estadía
 promedio.</p>
-<pre><code>## [1] 222399      5</code></pre>
+<pre class="r"><code>turistas_evyth &lt;- data_evyth %&gt;% 
+  filter(tipo_visitante == 1) %&gt;% #turistas
+  select(anio, trimestre, region_destino, pondera, px07) #variables de interés
+
+#Dimensiones de la base de trabajo
+dim(turistas_evyth)</code></pre>
+<pre><code>## [1] 226039      5</code></pre>
 <p>Ahora vamos a etiquetar la variable de <code>region_destino</code>
 para poder identificar cada campo.</p>
-<pre><code>## Joining with `by = join_by(region_destino)`
-## 1 variable etiquetada:
-## region_destino</code></pre>
+<pre class="r"><code>#Consulto valores
+unique(turistas_evyth$region_destino)</code></pre>
+<pre><code>## [1] 3 7 5 6 4 8 1 2</code></pre>
+<pre class="r"><code>#Etiquetamos
+##Opción paquete
+turistas_evyth &lt;- evyth::crear_etiqueta(turistas_evyth, &quot;region_destino&quot;)
+
+unique(turistas_evyth$region_destino)</code></pre>
 <pre><code>## [1] &quot;Provincia de Buenos Aires - Resto&quot;           
 ## [2] &quot;Cuyo&quot;                                        
 ## [3] &quot;Litoral&quot;                                     
@@ -445,43 +454,63 @@ para poder identificar cada campo.</p>
 ## [6] &quot;Patagonia&quot;                                   
 ## [7] &quot;Ciudad de Buenos Aires&quot;                      
 ## [8] &quot;Provincia de Buenos Aires - Partidos del GBA&quot;</code></pre>
-<p>Antes de calcular la estadía promedio, creemos una columna de tipo
-fecha con el trimestre y año.</p>
-<pre><code>## [1] &quot;2012-01-01&quot;</code></pre>
-<pre><code>## [1] &quot;2023-01-01&quot;</code></pre>
+<p>Antes de calcular la estadía promedio, revisemos las columnas de
+fechas.</p>
+<pre class="r"><code>unique(turistas_evyth$anio)</code></pre>
+<pre><code>##  [1] 2012 2013 2014 2015 2016 2017 2018 2019 2020 2021 2022 2023</code></pre>
+<pre class="r"><code>unique(turistas_evyth$trimestre)</code></pre>
+<pre><code>## [1] 1 2 3 4</code></pre>
 <p>En un script auxiliar guardamos una función para calcular la estadía
 promedio a partir de la tabla que generamos. La función nos devuelve
-para un trimestre y región de destino específicos, una tabla con el
-valor de la estadía promedio.</p>
-<pre><code>## `summarise()` has grouped output by &#39;trim_date&#39;. You can override using the
-## `.groups` argument.</code></pre>
-<pre><code>## # A tibble: 1 × 3
-##   trim_date  region_destino estadia_promedio
-##   &lt;date&gt;     &lt;chr&gt;                     &lt;dbl&gt;
-## 1 2022-01-01 Patagonia                  9.17</code></pre>
+para un anio, trimestre y región de destino específicos, una tabla con
+el valor de la estadía promedio.</p>
+<pre class="r"><code>source(&quot;funciones.R&quot;, encoding = &quot;UTF-8&quot;)
+
+estadia_promedio(data = turistas_evyth, 
+                 region = &quot;Patagonia&quot;, 
+                 year = 2019,
+                 trim = 1)</code></pre>
+<pre><code>## # A tibble: 1 × 4
+##    anio trimestre region_destino estadia_promedio
+##   &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;                     &lt;dbl&gt;
+## 1  2019         1 Patagonia                  8.61</code></pre>
 <p>Si utilizamos un loop podemos calcularlo para muchos trimestres o
 regiones.</p>
-<pre><code>## # A tibble: 1 × 3
-##   trim_date  region_destino estadia_promedio
-##   &lt;date&gt;     &lt;chr&gt;                     &lt;dbl&gt;
-## 1 2020-01-01 Patagonia                  10.2
-## # A tibble: 1 × 3
-##   trim_date  region_destino estadia_promedio
-##   &lt;date&gt;     &lt;chr&gt;                     &lt;dbl&gt;
-## 1 2021-01-01 Patagonia                  7.66
-## # A tibble: 1 × 3
-##   trim_date  region_destino estadia_promedio
-##   &lt;date&gt;     &lt;chr&gt;                     &lt;dbl&gt;
-## 1 2022-01-01 Patagonia                  9.17
-## # A tibble: 1 × 3
-##   trim_date  region_destino estadia_promedio
-##   &lt;date&gt;     &lt;chr&gt;                     &lt;dbl&gt;
-## 1 2023-01-01 Patagonia                  6.71</code></pre>
+<pre class="r"><code>regiones &lt;- c(&quot;Patagonia&quot;,&quot;Cuyo&quot;,&quot;Norte&quot;) #vector de regiones
+
+for (i in regiones) {
+  
+  print(estadia_promedio(data = turistas_evyth, 
+                 region = i, 
+                 year = 2019,
+                 trim = 1))
+}</code></pre>
+<pre><code>## # A tibble: 1 × 4
+##    anio trimestre region_destino estadia_promedio
+##   &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;                     &lt;dbl&gt;
+## 1  2019         1 Patagonia                  8.61
+## # A tibble: 1 × 4
+##    anio trimestre region_destino estadia_promedio
+##   &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;                     &lt;dbl&gt;
+## 1  2019         1 Cuyo                       6.81
+## # A tibble: 1 × 4
+##    anio trimestre region_destino estadia_promedio
+##   &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;                     &lt;dbl&gt;
+## 1  2019         1 Norte                      7.08</code></pre>
 <p>Por último, utilicemos la función para escribir un párrafo con el
 indicador.</p>
-<pre><code>## `summarise()` has grouped output by &#39;trim_date&#39;. You can override using the
-## `.groups` argument.</code></pre>
-<pre><code>## [1] &quot;La estadía promedio en la región Patagonia en el trimestre 2022-01-01 fue de 9.2 noches.&quot;</code></pre>
+<pre class="r"><code>estadia_patagonia &lt;- estadia_promedio(data = turistas_evyth, 
+                 region = &quot;Patagonia&quot;, 
+                 year = 2019,
+                 trim = 1)
+
+paste0(&quot;La estadía promedio en la región &quot;, estadia_patagonia$region_destino, &quot; en el trimestre &quot;, estadia_patagonia$trim, &quot; del año &quot;, estadia_patagonia$year, &quot; fue de &quot;, round(estadia_patagonia$estadia_promedio, 1), &quot; noches.&quot;)</code></pre>
+<pre><code>## [1] &quot;La estadía promedio en la región Patagonia en el trimestre  del año  fue de 8.6 noches.&quot;</code></pre>
+<p>Rmarkdown nos permite escribir código dentro del texto, lo cual es
+útil a la hora de automatizar reportes. El texto previo se puede generar
+también de la siguiente manera:</p>
+<p>La estadía promedio en la región <strong>Patagonia</strong> en el
+trimestre del año fue de 8.6 noches.</p>
 </div>
 
 

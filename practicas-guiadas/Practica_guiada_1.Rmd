@@ -1,19 +1,19 @@
 ---
 title: "Práctica guiada"
-date: "2023-10-12"
+date: "2023-10-19"
 output: html_document
 ---
 
-## Calculo de la estadía promedio de turistas internos
+## Cálculo de la estadía promedio de turistas internos
 
 La Encuesta de Viajes y Turismo de los Hogares permite caracterizar el turismo interno en Argentina. Entre los principales indicadores que podemos analizar se encuentran: cantidad de visitantes (turistas y excursionistas), pernoctes y estadía promedio, gasto turístico, entre otros.
 
-En el siguiente documento calcularemos la estadía promedio por trimestre y región de destino de los turistas para toda la serie disponible (2012-2023).
+En el siguiente documento calcularemos la estadía promedio por trimestre y región de destino de los turistas.
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 #Seteo config global de chunks
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 
 #Cargamos paquetes
 library(tidyverse)
@@ -24,8 +24,14 @@ Para leer datos desde el portal de datos abiertos del SINTA podemos optar por de
 ```{r}
 #Opción URL
 data_evyth <- read_csv("http://datos.yvera.gob.ar/dataset/b5819e9b-5edf-4aad-bd39-a81158a2b3f3/resource/645e5505-68ee-4cfa-90f9-fcc9a4a34a85/download/evyth_microdatos.csv")
+```
 
+
+```{r include=FALSE, eval=FALSE}
 #Opción paquete
+## install.packages("devtools")
+## devtools::install_github("d4t4tur/evyth")
+
 data_evyth <- evyth::descargar_microdato(anio = c(2012:2023), trimestre = c(1:4))
 ```
 
@@ -43,9 +49,11 @@ colnames(data_evyth)
 
 Consultamos el diccionario de la base para conocer las variables y sus valores:
 
-```{r}
+```{r echo=TRUE}
 #Usando el paquete evyth
 diccionario <- evyth::diccionario
+
+head(diccionario)
 ```
 
 Como la base es un poco grande, podemos quedarnos solo con las variables y casos de nuestro interés aplicando algunas de las funciones vistas en el Módulo 2.
@@ -64,56 +72,80 @@ dim(turistas_evyth)
 Ahora vamos a etiquetar la variable de `region_destino` para poder identificar cada campo.
 
 ```{r}
+#Consulto valores
+unique(turistas_evyth$region_destino)
+
+#Etiquetamos
+##Opción paquete
 turistas_evyth <- evyth::crear_etiqueta(turistas_evyth, "region_destino")
 
-#Valores etiquetados
 unique(turistas_evyth$region_destino)
 ```
-Antes de calcular la estadía promedio, creemos una columna de tipo fecha con el trimestre y año.
 
-```{r}
+
+```{r include=FALSE, eval=FALSE}
+
+##Opción tidyverse
 turistas_evyth <- turistas_evyth %>% 
-  mutate(trim_date = as.Date(paste0(anio,"-",trimestre,"-01")))
-
-
-#Período
-min(turistas_evyth$trim_date)
-max(turistas_evyth$trim_date)
+  mutate(region_destino = case_when(
+    region_destino == 1 ~ "Ciudad de Buenos Aires",
+    region_destino == 2 ~ "Provincia de Buenos Aires - Partidos del GBA",
+    region_destino == 3 ~ "Provincia de Buenos Aires - Resto",
+    region_destino == 4 ~ "Centro",
+    region_destino == 5 ~ "Litoral",
+    region_destino == 6 ~ "Norte",
+    region_destino == 7 ~ "Cuyo",
+    region_destino == 8 ~ "Patagonia"))
 
 ```
 
-En un script auxiliar guardamos una función para calcular la estadía promedio a partir de la tabla que generamos. La función nos devuelve para un trimestre y región de destino específicos, una tabla con el valor de la estadía promedio.
+Antes de calcular la estadía promedio, revisemos las columnas de fechas.
 
 ```{r}
-source("funciones.R")
+unique(turistas_evyth$anio)
+unique(turistas_evyth$trimestre)
+
+```
+
+En un script auxiliar guardamos una función para calcular la estadía promedio a partir de la tabla que generamos. La función nos devuelve para un anio, trimestre y región de destino específicos, una tabla con el valor de la estadía promedio.
+
+```{r}
+source("funciones.R", encoding = "UTF-8")
 
 estadia_promedio(data = turistas_evyth, 
                  region = "Patagonia", 
-                 fecha = "2022-01-01")
+                 year = 2019,
+                 trim = 1)
 
 ```
 
 Si utilizamos un loop podemos calcularlo para muchos trimestres o regiones.
 
 ```{r message=FALSE}
-trimestres <- c("2020-01-01","2021-01-01","2022-01-01","2023-01-01") #últimos primeros trimestres
+regiones <- c("Patagonia","Cuyo","Norte") #vector de regiones
 
-for (trim in trimestres) {
+for (i in regiones) {
   
   print(estadia_promedio(data = turistas_evyth, 
-                 region = "Patagonia", 
-                 fecha = trim))
+                 region = i, 
+                 year = 2019,
+                 trim = 1))
 }
 
 
 ```
+
 Por último, utilicemos la función para escribir un párrafo con el indicador.
 
 ```{r}
 estadia_patagonia <- estadia_promedio(data = turistas_evyth, 
                  region = "Patagonia", 
-                 fecha = "2022-01-01")
+                 year = 2019,
+                 trim = 1)
 
-paste0("La estadía promedio en la región ", estadia_patagonia$region_destino, " en el trimestre ", estadia_patagonia$trim_date, " fue de ", round(estadia_patagonia$estadia_promedio, 1), " noches.")
+paste0("La estadía promedio en la región ", estadia_patagonia$region_destino, " en el trimestre ", estadia_patagonia$trim, " del año ", estadia_patagonia$year, " fue de ", round(estadia_patagonia$estadia_promedio, 1), " noches.")
 ```
 
+Rmarkdown nos permite escribir código dentro del texto, lo cual es útil a la hora de automatizar reportes. El texto previo se puede generar también de la siguiente manera:
+
+La estadía promedio en la región **`r estadia_patagonia$region_destino`** en el trimestre `r estadia_patagonia$trim` del año `r estadia_patagonia$year` fue de `r round(estadia_patagonia$estadia_promedio, 1)` noches.
