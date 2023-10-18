@@ -143,9 +143,9 @@ estadia_patagonia <- estadia_promedio(data = turistas_evyth,
                  year = 2019,
                  trim = 1)
 
-paste0("La estadía promedio en la región ", estadia_patagonia$region_destino, " en el trimestre ", estadia_patagonia$trim, " del año ", estadia_patagonia$year, " fue de ", round(estadia_patagonia$estadia_promedio, 1), " noches.")
+paste0("La estadía promedio en la región ", estadia_patagonia$region_destino, " en el trimestre ", estadia_patagonia$trimestre, " del año ", estadia_patagonia$anio, " fue de ", round(estadia_patagonia$estadia_promedio, 1), " noches.")
 ```
 
 Rmarkdown nos permite escribir código dentro del texto, lo cual es útil a la hora de automatizar reportes. El texto previo se puede generar también de la siguiente manera:
 
-La estadía promedio en la región **`r estadia_patagonia$region_destino`** en el trimestre `r estadia_patagonia$trim` del año `r estadia_patagonia$year` fue de `r round(estadia_patagonia$estadia_promedio, 1)` noches.
+La estadía promedio en la región **`r estadia_patagonia$region_destino`** en el trimestre `r estadia_patagonia$trimestre` del año `r estadia_patagonia$anio` fue de `r round(estadia_patagonia$estadia_promedio, 1)` noches.
