@@ -30,11 +30,17 @@ Hacemos un poco de limpieza y nos quedamos con una jurisdicción y una tipologí
 ```{r}
 caba <- df %>% filter(l2 == "Capital Federal", operation_type=="Alquiler", currency=="ARS",
                       property_type=="Departamento", surface_covered > 0, surface_covered < 500, price > 0)
+
+#Borro df y libero memoria
+rm(df)
+gc()
 ```
 
 <br />
 
 ## 2. Gramática de un gráfico con `ggplot2`
+
+![](ggplot_add.png)
 
 El primer componente de un gráfico es su área. Esta la podemos definir con el método `ggplot()`, especificando los parámetros `data` y `mapping` de la siguiente manera.
 
@@ -70,9 +76,9 @@ Otra cuestión que nos podría interesar es de qué manera evolucionó el precio
 # Agregamos algunas columnas y filtramos nuestros datos
 caba_ <- caba %>%
   mutate(datetime = strptime(caba$start_date, "%Y-%m-%d"), 
-         yearpub=year(datetime), 
+         yearpub=years(datetime), 
          monthpub=months(datetime)) %>% 
-  filter(caba$price < 350000)
+  filter(price < 350000)
 
 # Creamos un df de etiquetas
 months_df <- data.frame(monthpub=c("enero","febrero","marzo","abril", "mayo","junio","julio",
@@ -83,7 +89,7 @@ months_df <- data.frame(monthpub=c("enero","febrero","marzo","abril", "mayo","ju
 # Terminamos de emprolijar el set de datos de alquileres en buenos aires
 caba_time <- left_join(caba_, months_df, by="monthpub") %>% 
   unite("periodPubChr", c("yearpub", "monthcod"), sep="-", remove = FALSE) %>% 
-  mutate(periodPub=as.Date(periodPubChr,format='%Y-%m-%d')) 
+  mutate(periodPub=as.Date(periodPubChr,format='%Y-%m-%d'))
 ```
 
 <br />
@@ -116,7 +122,7 @@ ggplot(data = serie_precios,
 
 ### Distribuciones
 
-Como toda variable contrinua, el precio puede ser modelado a partir de una distribución. Veamos qué alternativas tenemos para representar la distribución de precios de la variable departamentos en alquiler.
+Como toda variable continua, el precio puede ser modelado a partir de una distribución. Veamos qué alternativas tenemos para representar la distribución de precios de la variable departamentos en alquiler.
 
 ```{r}
 # también podemos utilizar r base
@@ -125,26 +131,22 @@ hist(caba_time$price)
 
 ```{r}
 # con ggplot
-ggplot(caba_time, aes(price)) + geom_histogram(bins=15) + 
-  xlab("precio de alquiler en $ARS") + ylab("propiedades publicadas") +
+ggplot(caba_time, aes(price)) + 
+  geom_histogram(bins=15) + 
+  xlab("precio de alquiler en $ARS") + 
+  ylab("propiedades publicadas") +
   scale_x_continuous(labels = function(x) format(x, scientific = FALSE))
 ```
-<br />
 
-Podemos ver que la distribución de precios está un tanto sesgada hacia su derecha. Es decir, algunos casos extremos generados por valores de precio exageradamente altos. Con un gráfico de dispersión, podemos ver en qué rango de la variable continua se encuentra la mayor concentración de casos (o el bin más recurrente).
+Podemos ver que la distribución de precios está un tanto sesgada hacia su derecha. Es decir, algunos casos extremos generados por valores de precio exageradamente altos. 
 
-```{r}
-ggplot(caba_time, aes(price)) + geom_density() +
-  scale_x_continuous(labels = function(x) format(x, scientific = FALSE)) + 
-  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
-```
 <br />
 
 Los gráficos de caja son una buena opción para trabajar con distribuciones. A continuación, vemos el precio del alquiler para cada período de nuestra serie. Esta visualización se genera con `geom_boxplot()` y nos informa la mediana de la distribución al centro de la caja. Con el argumento `outlier.shape` podemos excluir los valores extremos.
 
 ```{r}
 # reducimos el nivel de dispersion de nuestra variable "precio" 
-caba_time_ <- caba_time %>% filter(caba_time$price < 75000)
+caba_time_ <- caba_time %>% filter(price < 75000)
 
 ggplot(caba_time_, aes(x = periodPubChr, y=price)) + 
   geom_boxplot(outlier.shape = NA) + 
@@ -161,18 +163,35 @@ Ahora bien, ¿contamos con la misma cantidad de información para cada uno de lo
 
 ```{r}
 ggplot(caba_time, aes(substr(periodPubChr, 1, 7))) + 
-  geom_bar() + scale_x_discrete(guide = guide_axis(angle = 45)) +
-  xlab("") + ylab("propiedades publicadas")
+  geom_bar() + 
+  scale_x_discrete(guide = guide_axis(angle = 45)) +
+  xlab("") + 
+  ylab("propiedades publicadas")
 ```
 Otro de los usos que podemos darle a esta geometría es el de calcular algún estadístico resumen. Por ejemplo, el precio promedio por barrio.
 
 ```{r}
 ggplot(caba_time, aes(x=l3, y=price)) + 
-  geom_bar(position='dodge', stat='summary', fun='mean') +
+  geom_bar(stat='summary', fun='mean') +
   scale_x_discrete(guide = guide_axis(angle = 90)) +
   xlab("") + ylab("precio de alquiler en $ARS") +
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
 ```
+
+Alternativamente, podemos armar una tabla con el estadístico y utilizar `geom_col()`. Con tidyverse todo esto se puede hacer concatenando funciones.
+
+```{r}
+caba_time %>% 
+  group_by(l3) %>% 
+  summarise(price = mean(price)) %>% 
+  ggplot(aes(x=l3, y=price)) + 
+  geom_col() +
+  scale_x_discrete(guide = guide_axis(angle = 90)) +
+  xlab("") + ylab("precio de alquiler en $ARS") +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+
+```
+
 
 <br />
 
@@ -184,10 +203,13 @@ Repasemos algunas:
 
 * `xlab`: modifica las etiquetas del eje x
 * `ylab`: modifica las etiquetas del eje y
+Otra opción es usar labs(x="..", y="..")
+
 * `scale_x_continuous` : nos permite transformar la escala de valores de una variable continua en el eje x
 * `scale_y_continuous`: nos permite transformar la escala de valores de una variable continua en el eje y
 * `scale_x_discrete` : nos permite definir el aspecto de los valores discretos de las etiquetas del eje x
 * `scale_y_discrete` : nos permite definir el aspecto de los valores discretos de las etiquetas del eje y
+* `scale_x_date` : nos permite definir el aspecto de los valores de tipo fecha
 
 Con estas funciones cambiamos la posición de las etiquetas, el tipo de notación y los títulos de los ejes. 
 Veamos qué otro tipo de transformaciones podemos hacer.
@@ -197,13 +219,17 @@ Un recurso muy útil para geometrías de puntos y líneas es `geom_smooth()`.
 ```{r}
 # este nos permite visualizar la recta de mejor ajuste en un gráfico de dispersión
 ggplot(data = caba, mapping = aes(x = surface_covered, y = price))  + 
-  geom_point() + geom_smooth(method = "lm", se = FALSE)
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE)
 ```
+
 ```{r}
 # O bien suavizar una recta
 ggplot(data = serie_precios, 
        mapping = aes(x = periodPub, y = avg_price)) + 
-  geom_line() + geom_smooth(se = FALSE) + theme(legend.position = "bottom")
+  geom_line() + 
+  geom_smooth(se = FALSE) + 
+  theme(legend.position = "bottom")
 ```
 < br/>
 
@@ -226,14 +252,37 @@ label_bath <- function(x){
 # agregamos la nueva columna
 caba_time <- caba_time %>% 
   mutate(bathrooms_chr = sapply(replace_na(caba_time$bathrooms,1), label_bath)) 
+
+unique(caba_time$bathrooms_chr)
 ```
 
 ```{r}
 ggplot(data = caba_time, mapping = aes(x = surface_covered, y = price, color=bathrooms_chr))  + 
-  geom_point() + ylab("precio de alquiler en $ARS") + xlab("superficie cubierta") +
+  geom_point() + 
+  ylab("precio de alquiler en $ARS") + xlab("superficie cubierta") +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+
+Podemos aplicarlo dentro del geom_, al igual que el resto de las variables de mapping y la data.
+```{r}
+#Lo dentro del geom_
+ggplot() + 
+  geom_point(data = caba_time, mapping = aes(x = surface_covered, y = price,
+             color=bathrooms_chr)) + 
+  ylab("precio de alquiler en $ARS") + xlab("superficie cubierta") +
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
 ```
 <br />
+
+Los argumentos que queramos fijar para todo el geom_ deben ir por fuera del aes(). Por ejemplo, podemos colorear todos los puntos del mismo color. 
+
+```{r}
+ggplot() + 
+  geom_point(data = caba_time, mapping = aes(x = surface_covered, y = price),
+             color = "red") + 
+  ylab("precio de alquiler en $ARS") + xlab("superficie cubierta") +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
 
 ### Relleno
 
@@ -241,7 +290,8 @@ Con `fill` podemos cambiar el color interno de un elemento, por ejemplo de un co
 
 ```{r}
 ggplot(caba_time, aes(substr(periodPubChr, 1, 7))) + 
-  geom_bar(fill = "blue") + scale_x_discrete(guide = guide_axis(angle = 45)) +
+  geom_bar(fill = "blue") + 
+  scale_x_discrete(guide = guide_axis(angle = 45)) +
   xlab("") + ylab("propiedades publicadas")
 ```
 <br />
@@ -255,10 +305,33 @@ Con `linetype` podemos cambiar el tipo de línea en `geom_line`. Y con `shape` y
 ```{r}
 ggplot(data = serie_precios, 
        mapping = aes(x = periodPub, y = avg_price)) + 
-  geom_line(linetype="dashed", alpha=0.5) + geom_point(color="red", shape="+", size=9) + xlab("")  
+  geom_line(linetype="dashed", alpha=0.5) + 
+  geom_point(color="red", shape="+", size=9) + xlab("")  
 
 ```
 
+### Ajustar tema
+
+También podemos utilizar la función `theme()` y sus variantes `theme_x()` para hacer retoques generales en el gráfico.
+
+```{r}
+###Temas predefinidos
+ggplot(caba_time, aes(substr(periodPubChr, 1, 7))) + 
+  geom_bar(fill = "blue") + 
+  scale_x_discrete(guide = guide_axis(angle = 45)) +
+  xlab("") + 
+  ylab("propiedades publicadas") +
+  theme_linedraw()
+```
 
 
+```{r}
+###Leyenda
+ggplot(caba_time, aes(substr(periodPubChr, 1, 7))) + 
+  geom_bar(aes(fill = periodPubChr)) + 
+  scale_x_discrete(guide = guide_axis(angle = 45)) +
+  xlab("") + 
+  ylab("propiedades publicadas") +
+  theme(legend.position = "left")
+```
 
