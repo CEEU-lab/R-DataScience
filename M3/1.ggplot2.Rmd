@@ -7,14 +7,14 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 ## 1. Las librerías y la base de datos
 
 Primero invocamos a `tidyverse` para utilizar el método `read_csv` del paquete `readr`. Luego, volvemos a cargar nuestro set de datos de propiedades inmobiliarias.
 
-<br />
+<br>
 
 ```{r}
 library(tidyverse)
@@ -23,7 +23,7 @@ path <- "https://storage.googleapis.com/python_mdg/carto_cursos/ar_properties.cs
 df <- read_csv(path,
                col_names=TRUE)
 ```
-<br />
+<br>
 
 Hacemos un poco de limpieza y nos quedamos con una jurisdicción y una tipología. Digamos que vamos a trabajar con **departamentos en alquiler en la ciudad de Buenos Aires**.
 
@@ -36,7 +36,7 @@ rm(df)
 gc()
 ```
 
-<br />
+<br>
 
 ## 2. Gramática de un gráfico con `ggplot2`
 
@@ -48,14 +48,14 @@ El primer componente de un gráfico es su área. Esta la podemos definir con el 
 # iniciamos el área de un gráfico
 ggplot(data=caba, mapping = aes(x=surface_covered,y=price))
 ```
-<br />
+<br>
 
 Pero para poder representar nuestra información en este área necesitamos una capa adicional. La geometría es la que ofrece distintas alternativas de representación visual en función de la naturaleza de nuestros datos. Los nombres de las funciones de geometría siguen el patrón: geom_X donde X es el nombre de la geometría. Algunos ejemplos incluyen `geom_point`, `geom_line`,`geom_bar` y `geom_histogram`.
 
-<br />
+<br>
 
 ## 3. Geometrías
-<br />
+<br>
 ### Gráficos de dispersión
 
 Supongamos que queremos ver cuánto crece el precio de un departamento en alquiler en función de su tamaño. Para eso vamos a necesitar hacer un gráfico de dispersión que nos permita inspeccionar si existe algún tipo de relación. Veamos el método `geom_point()` para ello.
@@ -66,7 +66,7 @@ ggplot(data = caba, mapping = aes(x = surface_covered, y = price))  +
   geom_point() 
 ```
 
-<br />
+<br>
 
 ### Series de tiempo
 
@@ -75,9 +75,8 @@ Otra cuestión que nos podría interesar es de qué manera evolucionó el precio
 ```{r}
 # Agregamos algunas columnas y filtramos nuestros datos
 caba_ <- caba %>%
-  mutate(datetime = strptime(caba$start_date, "%Y-%m-%d"), 
-         yearpub=years(datetime), 
-         monthpub=months(datetime)) %>% 
+  mutate(yearpub=substr(start_date, 1, 4), 
+         monthpub=months(start_date)) %>% 
   filter(price < 350000)
 
 # Creamos un df de etiquetas
@@ -92,7 +91,7 @@ caba_time <- left_join(caba_, months_df, by="monthpub") %>%
   mutate(periodPub=as.Date(periodPubChr,format='%Y-%m-%d'))
 ```
 
-<br />
+<br>
 
 Esta es la serie de valores que vamos a querer representar ...
 
@@ -101,7 +100,7 @@ Esta es la serie de valores que vamos a querer representar ...
 caba_time %>% select("periodPub","price") %>% head()
 ```
 
-<br />
+<br>
 
 Con esta serie, vamos a generar una sumarización que nos permita calcular el precio promedio por período. La tabla `serie_precios` es la que vamos a utilizar para graficar nuestros valores de precio.
 
@@ -118,7 +117,7 @@ ggplot(data = serie_precios,
        mapping = aes(x = periodPub, y = avg_price)) + 
   geom_line()
 ```
-<br />
+<br>
 
 ### Distribuciones
 
@@ -140,7 +139,7 @@ ggplot(caba_time, aes(price)) +
 
 Podemos ver que la distribución de precios está un tanto sesgada hacia su derecha. Es decir, algunos casos extremos generados por valores de precio exageradamente altos. 
 
-<br />
+<br>
 
 Los gráficos de caja son una buena opción para trabajar con distribuciones. A continuación, vemos el precio del alquiler para cada período de nuestra serie. Esta visualización se genera con `geom_boxplot()` y nos informa la mediana de la distribución al centro de la caja. Con el argumento `outlier.shape` podemos excluir los valores extremos.
 
@@ -155,7 +154,7 @@ ggplot(caba_time_, aes(x = periodPubChr, y=price)) +
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE)) + 
   ylab("precio de alquiler en $ARS") + xlab("")
 ```
-<br />
+<br>
 
 ### Gráficos de barras
 
@@ -168,6 +167,7 @@ ggplot(caba_time, aes(substr(periodPubChr, 1, 7))) +
   xlab("") + 
   ylab("propiedades publicadas")
 ```
+
 Otro de los usos que podemos darle a esta geometría es el de calcular algún estadístico resumen. Por ejemplo, el precio promedio por barrio.
 
 ```{r}
@@ -193,7 +193,17 @@ caba_time %>%
 ```
 
 
-<br />
+<br>
+
+Un recurso muy útil para geometrías de puntos y líneas es `geom_smooth()`. 
+
+```{r}
+# este nos permite visualizar la recta de mejor ajuste en un gráfico de dispersión
+ggplot(data = caba, mapping = aes(x = surface_covered, y = price))  + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
 
 ## 4. Cambiar la apariencia de una geometría
 
@@ -214,24 +224,8 @@ Otra opción es usar labs(x="..", y="..")
 Con estas funciones cambiamos la posición de las etiquetas, el tipo de notación y los títulos de los ejes. 
 Veamos qué otro tipo de transformaciones podemos hacer.
 
-Un recurso muy útil para geometrías de puntos y líneas es `geom_smooth()`. 
 
-```{r}
-# este nos permite visualizar la recta de mejor ajuste en un gráfico de dispersión
-ggplot(data = caba, mapping = aes(x = surface_covered, y = price))  + 
-  geom_point() + 
-  geom_smooth(method = "lm", se = FALSE)
-```
-
-```{r}
-# O bien suavizar una recta
-ggplot(data = serie_precios, 
-       mapping = aes(x = periodPub, y = avg_price)) + 
-  geom_line() + 
-  geom_smooth(se = FALSE) + 
-  theme(legend.position = "bottom")
-```
-< br/>
+<br>
 
 ### Colores 
 
@@ -272,14 +266,14 @@ ggplot() +
   ylab("precio de alquiler en $ARS") + xlab("superficie cubierta") +
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
 ```
-<br />
+<br>
 
 Los argumentos que queramos fijar para todo el geom_ deben ir por fuera del aes(). Por ejemplo, podemos colorear todos los puntos del mismo color. 
 
 ```{r}
 ggplot() + 
-  geom_point(data = caba_time, mapping = aes(x = surface_covered, y = price),
-             color = "red") + 
+  geom_point(data = caba_time, 
+             mapping = aes(x = surface_covered, y = price),color = "red") + 
   ylab("precio de alquiler en $ARS") + xlab("superficie cubierta") +
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
 ```
@@ -294,7 +288,7 @@ ggplot(caba_time, aes(substr(periodPubChr, 1, 7))) +
   scale_x_discrete(guide = guide_axis(angle = 45)) +
   xlab("") + ylab("propiedades publicadas")
 ```
-<br />
+<br>
 
 ### Combinar estilos y geometrías
 
