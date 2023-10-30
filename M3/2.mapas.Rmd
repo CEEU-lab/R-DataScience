@@ -5,7 +5,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 ## 1. Las librerías y la base de datos
@@ -22,6 +22,7 @@ path <- "https://storage.googleapis.com/python_mdg/carto_cursos/ar_properties.cs
 
 df <- read_csv(path,
                col_names=TRUE)
+
 ```
 
 ```{r}
@@ -29,29 +30,19 @@ caba <- df %>% filter(l2 == "Capital Federal", operation_type=="Alquiler", curre
                       property_type=="Departamento", surface_covered > 0, surface_covered < 500, price > 0)
 
 # Agregamos algunas columnas y filtramos nuestros datos
-caba_ <- caba %>%
+caba <- caba %>%
   mutate(datetime = strptime(caba$start_date, "%Y-%m-%d"), 
          yearpub=year(datetime), 
          monthpub=months(datetime)) %>% 
   filter(caba$price < 350000)
 
-# Creamos un df de etiquetas
-months_df <- data.frame(monthpub=c("enero","febrero","marzo","abril", "mayo","junio","julio",
-                       "agosto","septiembre","octubre","noviembre","diciembre"),
-                        monthcod=c("01-01","02-01","03-01","04-01","05-01",
-                                   "06-01","07-01","08-01","09-01","10-01","11-01","12-01"))
-
-# Terminamos de emprolijar el set de datos de alquileres en buenos aires
-caba_time <- left_join(caba_, months_df, by="monthpub") %>% 
-  unite("periodPubChr", c("yearpub", "monthcod"), sep="-", remove = FALSE) %>% 
-  mutate(periodPub=as.Date(periodPubChr,format='%Y-%m-%d')) 
 ```
 
 ## 2. Geometrías y proyecciones: la información georreferenciada
 
 Los datos geográficos o espaciales suelen agruparse en dos grandes tipos: `ráster` y `vectorial`.
 
-Mientras los primeros se caracterizan por disponer la información en una grilla codificada en pixeles con valores numéricos (comunmente utilizados para el procesaimiento de imágnes satelitales), los últimos se distinguen por la presencia de un conjunto de objetos geográficos de distinto tipo: **líneas**, **puntos** y **polígonos**.
+Mientras los primeros se caracterizan por disponer la información en una grilla codificada en pixeles con valores numéricos (comunmente utilizados para el procesamiento de imágenes satelitales), los últimos se distinguen por la presencia de un conjunto de objetos geográficos de distinto tipo: **líneas**, **puntos** y **polígonos**.
 
 <br />
 
@@ -64,7 +55,7 @@ Mientras los primeros se caracterizan por disponer la información en una grilla
 A continuación, vamos a visualizar nuestra información de propiedades. Es importante aclarar que, este dataframe todavía no cuenta con `geometrías` de tipo espacial ...
 
 ```{r}
-ggplot(data=caba_time, mapping=(aes(x=lon, y=lat))) + geom_point()
+ggplot(data=caba, mapping=(aes(x=lon, y=lat))) + geom_point()
 ```
 
 <p align="left">
@@ -78,11 +69,17 @@ Para hacer la transformación a un objeto geográfico vamos a usar la librería 
 
 ```{r}
 # Convertimos nuestro set de datos en un objeto espacial
-caba.sf <- caba_time %>% drop_na(lon,lat)  %>% st_as_sf(coords = c("lon", "lat"), crs = 4326)
+caba_sf <- caba %>% 
+  drop_na(lon,lat) %>% 
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
 
-coords.sf <- st_coordinates(caba.sf)
-propiedades <- caba.sf %>% 
-  mutate(lon = coords.sf[, "X"], lat = coords.sf[, "Y"]) 
+# Pasamos de geometría a columnas 
+coords_sf <- st_coordinates(caba_sf)
+propiedades <- caba_sf %>% 
+  mutate(lon = coords_sf[, "X"], lat = coords_sf[, "Y"])
+
+# Veamos tipo de objeto
+class(propiedades)
 ```
 
 <br />
@@ -90,7 +87,8 @@ propiedades <- caba.sf %>%
 Ahora que convertimos nuestros puntos, vamos a representarlos en un eje de coordenadas latitud y longitud.
 
 ```{r}
-ggplot(propiedades) + geom_sf()
+ggplot(propiedades) + 
+  geom_sf()
 ```
 
 <br />
@@ -101,13 +99,18 @@ En términos muy simples, lo que vamos a hacer a continuación es identificar to
 
 ```{r}
 # Cargamos la capa de barrios
-path <- 'https://cdn.buenosaires.gob.ar/datosabiertos/datasets/ministerio-de-educacion/barrios/barrios.geojson' 
-barrios <- read_sf(path)
+path <- 'https://cdn.buenosaires.gob.ar/datosabiertos/datasets/ministerio-de-educacion/barrios/barrios.geojson'
+barrios <- read_sf(path) #para leer archivos con datos espaciales
+
+class(barrios)
 ```
+
+*Tipos de archivos más comunes para guardar datos espaciales: .shp, .geojson, .kml, .gpkg*
 
 ```{r}
 # y vemos que contamos con algunos polígonos
-ggplot(barrios) + geom_sf()
+ggplot(barrios) + 
+  geom_sf()
 ```
 
 <br />
@@ -150,8 +153,13 @@ Finalmente hacemos nuestro join espacial!
 
 ```{r}
 # Hacemos un join espacial y omitimos los casos que no coincidieron
-propiedades.caba <- st_join(propiedades, barrios) %>% 
+propiedades_caba <- st_join(propiedades, barrios) %>% 
   drop_na(BARRIO, COMUNA) %>% 
+  mutate(ARSxM2 = price/surface_total) %>% 
+  drop_na(ARSxM2)
+
+# Podemos hacer también el filtro espacial
+propiedades_caba2 <- st_filter(propiedades, barrios) %>% 
   mutate(ARSxM2 = price/surface_total) %>% 
   drop_na(ARSxM2)
 ```
@@ -162,18 +170,20 @@ Y contruimos una primera visualización. Como se puede apreciar, estamos utiliza
 # Departamentos en alquiler en CABA
 ggplot() + 
   geom_sf(data = barrios) + 
-  geom_sf(data = propiedades.caba, 
+  geom_sf(data = propiedades_caba, 
           color='orange',
-          size= 0.5) 
+          size= 0.5)
 ```
 
 <br />
 
+Podemos ajustar el tamaño de los puntos en función de una variable.
+
 ```{r}
 # Ahora definimos el tamaño de los puntos
-ggplot(propiedades.caba) +
+ggplot(propiedades_caba) +
   geom_sf(data=barrios) +
-  geom_sf(size = (propiedades.caba$ARSxM2)*0.005, color = "orange",
+  geom_sf(aes(size = ARSxM2), color = "orange",
           shape = 21, stroke = 0.05) 
 ```
 
@@ -182,95 +192,60 @@ ggplot(propiedades.caba) +
 También podemos customizar la escala de colores de los puntos.
 
 ```{r}
-ggplot(propiedades.caba) +
+ggplot(propiedades_caba) +
   geom_sf(data=barrios) +
-  geom_sf(aes(fill=ARSxM2), size=2, color = "black", shape = 21, stroke = 0.05) +
-  scale_fill_gradientn(colours = c("yellow","red", "blue"))
+  geom_sf(aes(color=ARSxM2), size=0.7, alpha = 0.5) +
+  scale_color_gradientn(colours = c("yellow","red", "blue"))
 ```
 
 <br />
 
-También el tamaño de los puntos ...
-
-```{r warning=FALSE}
-propiedades.caba %>% drop_na(bathrooms) %>% 
-  drop_na(ARSxM2) %>% 
-ggplot() + 
-geom_sf(data = barrios) +
-geom_sf(data = propiedades.caba) +
-geom_point(aes(color = ARSxM2, 
-               size = bathrooms, 
-               geometry = geometry),
-           stat = "sf_coordinates") +
-scale_color_viridis_c(option = "turbo") +
-theme(legend.position = "right") 
-```
-
-<br />
-
-Salgamos un poco de la representación espacial y veamos el rango de precios por barrio o comuna para tener una idea de cuáles son las zonas más caras y más baratas para alquilar en la Ciudad de Buenos Aires.
+Ahora bien, la gran cantidad de puntos concentrados en poco espacio no nos brinda tanta información de manera visual. Salgamos un poco de la representación espacial y veamos los precios por barrio o comuna para tener una idea de cuáles son las zonas más caras y más baratas para alquilar en la Ciudad de Buenos Aires.
 
 ```{r}
-ggplot(propiedades.caba, aes(x=COMUNA, y=price)) + 
-  geom_bar(position='dodge', stat='summary', fun='mean', color="green")
-```
-
-<br />
-
-Ahora veamos nuestros resultados de manera ordenada.
-
-```{r}
-precios.comuna <- propiedades.caba %>% group_by(COMUNA) %>% 
+precios_comuna <- propiedades_caba %>% 
+  group_by(COMUNA) %>% 
   summarise(precio_medio=mean(price)) %>% 
-  arrange(precio_medio) %>% select(COMUNA, precio_medio)
+  arrange(precio_medio)
 
-ggplot(precios.comuna, aes(x=reorder(COMUNA, +precio_medio), y=precio_medio, label=precio_medio)) + 
-  geom_bar(stat = 'identity', fill="green", color="blue") +
-  xlab("Comuna") + ylab("precio de alquiler en $ARS") +
+ggplot(precios_comuna, 
+       aes(x=reorder(COMUNA, +precio_medio), y=precio_medio, 
+           label=precio_medio)) + 
+  geom_col(fill="green", color="blue") +
+  xlab("Comuna") + 
+  ylab("precio de alquiler en $ARS") +
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
 ```
 
-<br />
-
-Como se puede apreciar, utilizamos el argumento `stat` en `geom_bar`. A este le pasamos el valor [identity](https://stackoverflow.com/questions/59008974/why-is-stat-identity-necessary-in-geom-bar-in-ggplot). El mismo sirve para saltearnos la sumarización.
-
-<br />
+Representamos ahora el precio promedio por comuna utilizando los polígonos.
 
 ```{r}
-precios.comuna <- propiedades.caba %>% 
-  group_by(COMUNA) %>% 
-  summarize(avg_price=mean(ARSxM2)) %>% 
-  select(COMUNA, avg_price)
-
-barrios.precios <- st_join(barrios, precios.comuna)
+barrios_precios <- st_join(barrios, precios_comuna)
 
 ggplot() +
-  geom_sf(data=barrios.precios, aes(fill=avg_price)) +
+  geom_sf(data=barrios_precios, aes(fill=precio_medio)) +
   theme_bw() +
-  scale_fill_viridis_c("ARS$")+
+  scale_fill_viridis_c()+
   ggtitle("Precio medio del m2 en alquiler por comuna")
 ```
 
-<br />
 
-Hagamos un último análisis y creemos una etiqueta de zonas para ver cómo evolucionó el precio del alquiler en cada una de ellas durante el período estudiado.
+## ¿Dónde consultar/buscar datos espaciales?
 
-```{r}
-zonas <- data.frame(COMUNA = seq(1,15), 
-                    ZONA = c("Centro", "Norte", "Centro", "Sur", "Centro", "Centro", "Centro", "Sur", 
-                             "Centro", "Centro", "Centro", "Norte", "Norte", "Norte", "Norte"))
+Algunos de los principales sitios de Argentina:
 
-propiedades.caba <- left_join(propiedades.caba, zonas, by='COMUNA')
+- IGN: https://www.ign.gob.ar/
 
-propiedades.caba %>% 
-  group_by(ZONA, periodPub) %>% 
-  mutate(avg_price=mean(price)) %>% 
-  ggplot(aes(periodPub, avg_price)) +
-  geom_line(aes(color=ZONA)) +
-  geom_point(aes(color = ZONA), shape = "*", size = 5) + 
-  xlab("") + ylab("precio del alquiler en $ARS")
-```
+- Datos abiertos: https://datos.gob.ar/
 
+- BAHRA: http://www.bahra.gob.ar/
 
+- IDERA: https://www.idera.gob.ar/
+
+- INDEC: https://www.indec.gob.ar/
+
+- En R podemos usar el paquete [`geoAr`](https://github.com/PoliticaArgentina/geoAr) que nos facilita funciones para traer y trabajar con datos de Argentina.
+
+También pueden generar sus propias bases de datos espaciales a partir de servicios como My Maps de Google o [geojson.io](https://geojson.io/)
 
 
