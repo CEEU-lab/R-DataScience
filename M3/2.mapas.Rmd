@@ -15,6 +15,8 @@ Primero invocamos a `tidyverse` para utilizar el método `read_csv` del paquete 
 <br />
 
 ```{r base}
+#install.packages("sf")
+
 library(tidyverse)
 library(sf)
 
@@ -26,8 +28,12 @@ df <- read_csv(path,
 ```
 
 ```{r}
-caba <- df %>% filter(l2 == "Capital Federal", operation_type=="Alquiler", currency=="ARS",
-                      property_type=="Departamento", surface_covered > 0, surface_covered < 500, price > 0)
+caba <- df %>% 
+  filter(l2 == "Capital Federal", 
+         operation_type=="Alquiler", 
+         currency=="ARS",
+         property_type=="Departamento", 
+         surface_covered > 0, surface_covered < 500, price > 0)
 
 # Agregamos algunas columnas y filtramos nuestros datos
 caba <- caba %>%
@@ -55,7 +61,8 @@ Mientras los primeros se caracterizan por disponer la información en una grilla
 A continuación, vamos a visualizar nuestra información de propiedades. Es importante aclarar que, este dataframe todavía no cuenta con `geometrías` de tipo espacial ...
 
 ```{r}
-ggplot(data=caba, mapping=(aes(x=lon, y=lat))) + geom_point()
+ggplot(data=caba, mapping=(aes(x=lon, y=lat))) + 
+  geom_point()
 ```
 
 <p align="left">
@@ -68,15 +75,21 @@ Para hacer la transformación a un objeto geográfico vamos a usar la librería 
 
 
 ```{r}
+
+class(caba)
+
 # Convertimos nuestro set de datos en un objeto espacial
 caba_sf <- caba %>% 
   drop_na(lon,lat) %>% 
   st_as_sf(coords = c("lon", "lat"), crs = 4326)
 
+#class(caba_sf)
+
 # Pasamos de geometría a columnas 
 coords_sf <- st_coordinates(caba_sf)
 propiedades <- caba_sf %>% 
-  mutate(lon = coords_sf[, "X"], lat = coords_sf[, "Y"])
+  mutate(lon = coords_sf[, "X"], 
+         lat = coords_sf[, "Y"])
 
 # Veamos tipo de objeto
 class(propiedades)
@@ -102,6 +115,7 @@ En términos muy simples, lo que vamos a hacer a continuación es identificar to
 path <- 'https://cdn.buenosaires.gob.ar/datosabiertos/datasets/ministerio-de-educacion/barrios/barrios.geojson'
 barrios <- read_sf(path) #para leer archivos con datos espaciales
 
+# Tipo de objeto
 class(barrios)
 ```
 
@@ -147,19 +161,31 @@ if (st_crs(propiedades) == st_crs(barrios)) {
   # reproyectamos la capa
   data.sf <- st_transform(propiedades, st_crs(barrios))
 }
+
 ```
 
 Finalmente hacemos nuestro join espacial!
 
 ```{r}
+#Ejemplo de join
+data1 <- data.frame(id = c(1,2,3),
+                    nombre = c("Juan","María","Pablo"))
+
+data2 <- data.frame(id = c(3,1,2),
+                    edad = c(25,30,58))
+
+data_completo <- data1 %>% 
+  left_join(data2, by = "id")
+
+
 # Hacemos un join espacial y omitimos los casos que no coincidieron
-propiedades_caba <- st_join(propiedades, barrios) %>% 
+propiedades_caba <- st_join(x = propiedades, y = barrios) %>% 
   drop_na(BARRIO, COMUNA) %>% 
   mutate(ARSxM2 = price/surface_total) %>% 
   drop_na(ARSxM2)
 
 # Podemos hacer también el filtro espacial
-propiedades_caba2 <- st_filter(propiedades, barrios) %>% 
+propiedades_caba2 <- st_filter(x = propiedades, y =  barrios) %>% 
   mutate(ARSxM2 = price/surface_total) %>% 
   drop_na(ARSxM2)
 ```
@@ -169,7 +195,7 @@ Y contruimos una primera visualización. Como se puede apreciar, estamos utiliza
 ```{r}
 # Departamentos en alquiler en CABA
 ggplot() + 
-  geom_sf(data = barrios) + 
+  geom_sf(data = barrios) +
   geom_sf(data = propiedades_caba, 
           color='orange',
           size= 0.5)
@@ -181,9 +207,10 @@ Podemos ajustar el tamaño de los puntos en función de una variable.
 
 ```{r}
 # Ahora definimos el tamaño de los puntos
-ggplot(propiedades_caba) +
-  geom_sf(data=barrios) +
-  geom_sf(aes(size = ARSxM2), color = "orange",
+ggplot() +
+  geom_sf(data= barrios) +
+  geom_sf(data= propiedades_caba,
+          aes(size = ARSxM2), color = "orange",
           shape = 21, stroke = 0.05) 
 ```
 
@@ -192,10 +219,16 @@ ggplot(propiedades_caba) +
 También podemos customizar la escala de colores de los puntos.
 
 ```{r}
-ggplot(propiedades_caba) +
+mapa_caba <- ggplot() +
   geom_sf(data=barrios) +
-  geom_sf(aes(color=ARSxM2), size=0.7, alpha = 0.5) +
+  geom_sf(data = propiedades_caba,
+          aes(color=ARSxM2), size=0.7, alpha = 0.5) +
   scale_color_gradientn(colours = c("yellow","red", "blue"))
+
+#Guardar ggplot
+ggsave(plot = mapa_caba, "mapa_prueba.png")
+
+mapa_caba
 ```
 
 <br />
@@ -208,10 +241,11 @@ precios_comuna <- propiedades_caba %>%
   summarise(precio_medio=mean(price)) %>% 
   arrange(precio_medio)
 
+#Ejemplo con etiqueta en cada columna
 ggplot(precios_comuna, 
-       aes(x=reorder(COMUNA, +precio_medio), y=precio_medio, 
-           label=precio_medio)) + 
+       aes(x=reorder(COMUNA, +precio_medio), y=precio_medio)) + 
   geom_col(fill="green", color="blue") +
+  geom_text(aes(label = round(precio_medio)), vjust = -0.7, size = 2.5) +
   xlab("Comuna") + 
   ylab("precio de alquiler en $ARS") +
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
@@ -225,8 +259,9 @@ barrios_precios <- st_join(barrios, precios_comuna)
 ggplot() +
   geom_sf(data=barrios_precios, aes(fill=precio_medio)) +
   theme_bw() +
-  scale_fill_viridis_c()+
+  scale_fill_viridis_c() +
   ggtitle("Precio medio del m2 en alquiler por comuna")
+
 ```
 
 
