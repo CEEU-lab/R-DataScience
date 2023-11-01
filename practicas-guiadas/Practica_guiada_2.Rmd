@@ -1,30 +1,223 @@
 ---
-title: "ParcticaGuiada"
-author: "PyMap"
-date: "2023-07-27"
+title: "Práctica Guiada II"
+date: "2023-11-02"
 output: html_document
 ---
 
-## TITULO DEL REPORTE
+# CONECTIVIDAD AÉREA
 
-Nota relevante para la interpretación de los resultados.
+```{r warning = FALSE, message = FALSE, echo=FALSE}
 
-## Visualización 1
+#Seteo config global de chunks
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = FALSE)
 
-```{r echo=FALSE}
-library(ggplot2)
-data <- "load the data"
-ggplot(data, aes()) + geom_x()
-```
-
-## Visualización 2
-
-```{r echo=FALSE}
-data <- "load the data"
-ggplot(data, aes()) + geom_x()
-```
-```{r}
-install.packages("sf")
+#Cargo librerías
+library(tidyverse)
+library(lubridate)
 library(sf)
+
+
+#Base de datos
+data <- read.csv("http://datos.yvera.gob.ar/dataset/c0e7bc3d-553c-405c-8b32-79282b28ffd5/resource/aab49234-28c9-48ab-a978-a83485139290/download/base_microdatos.csv")
+
+```
+
+## Introducción
+
+En el presente reporte se exponen algunos indicadores referidos al mercado aerocomercial de la provincia de **Salta** para el mes de **julio 2023**. El reporte se basa en datos publicados en el Sistema de Información Turística de la Argentina (SINTA) a partir de información suministrada por la Administración Nacional de Aviación Civil (ANAC).
+
+
+## Evolución mensual de pasajeros
+
+```{r}
+
+### Transformaciones
+#Reviso columna de fecha
+#class(data$indice_tiempo)
+
+#Convierto columna a date y genero columnas de mes y año
+data <- data %>% 
+  mutate(indice_tiempo = as.Date(indice_tiempo),
+         mes = month(indice_tiempo, label = T, abbr = F),
+         anio = year(indice_tiempo),
+         fecha_mes = make_date(anio, mes)) %>% 
+  filter(anio == 2023) #filtro año 2023
+
+#class(data$indice_tiempo)
+#class(data$fecha_mes)
+```
+
+El mes del año 2023 que presentó mayor cantidad de pasajeros fue junio.
+
+```{r}
+#Creo tabla mensual
+data_mensual <- data %>%
+  filter(clasificacion_vuelo == "Cabotaje",
+         clase_vuelo == "Regular",
+         destino_provincia == "Salta") %>% 
+  group_by(fecha_mes) %>% 
+  summarise(pasajeros = sum(pasajeros)) %>% 
+  ungroup()
+
+#Genero ggplot
+ggplot(data_mensual, aes(fecha_mes, pasajeros)) +
+  geom_line(color = "blue", linetype = "dashed") +
+  geom_point(color = "blue", size = 2.5) +
+  scale_x_date(date_breaks = "1 month", #quiebres del eje X
+               date_labels = "%b") + #formato de fecha
+  scale_y_continuous(labels = function(x) paste0(round(x/1000)," mil"),
+                     breaks = seq(min(data_mensual$pasajeros),
+                                  max(data_mensual$pasajeros), 
+                                  by = 4000)) + #ajusto etiquetas eje Y
+  labs(title = "Pasajeros en vuelos de cabotaje con destino a Salta",
+       subtitle = "Año 2023",
+       x = "",
+       y = "Pasajeros",
+       caption = "Fuente: SINTA en base a datos de ANAC") + #defino labs
+  theme_light() + #theme predefinido
+  theme(panel.grid.minor.x = element_blank()) #personalizo theme
+```
+
+## Evolución diaria
+
+```{r}
+#Creo tabla diaria
+data_diaria <- data %>%
+  filter(clasificacion_vuelo == "Cabotaje",
+         clase_vuelo == "Regular",
+         destino_provincia == "Salta") %>% 
+  filter(mes == "julio") %>% #filtro mes actual
+  group_by(indice_tiempo) %>% #agrupo por día
+  summarise(pasajeros = sum(pasajeros),
+            asientos = sum(asientos)) %>% 
+  ungroup()
+
+#Pivoteo datos
+data_pivot <- data_diaria %>% 
+  pivot_longer(c(pasajeros, asientos), 
+               names_to = "indicador",
+               values_to = "valor")
+
+```
+
+Entre el 12 y 25 de julio se observa una tasa de ocupación de asientos mayor.
+
+```{r}
+#Gráfico diario
+ggplot(data_pivot, aes(indice_tiempo, valor, color = indicador)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(date_breaks = "1 week", #quiebres del eje X por semana
+               date_labels = "%d") + #formato de fecha día
+  scale_color_manual(values = c("asientos"="red",
+                                "pasajeros"="blue")) + #Defino colores
+  labs(title = "Pasajeros y asientos en vuelos de cabotaje con destino a Salta",
+       subtitle = "Julio 2023",
+       x = "Día",
+       y = "",
+       caption = "Fuente: SINTA en base a datos de ANAC",
+       color = "") + #defino labs
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+## Aeropuertos
+
+Origen de los vuelos con destino al **Aeropuerto Int. Martín Miguel de Güemes**.
+
+```{r}
+data_origen <- data %>%
+  filter(clasificacion_vuelo == "Cabotaje",
+         clase_vuelo == "Regular",
+         destino_provincia == "Salta",
+         mes == "julio") %>% 
+  group_by(origen_provincia, origen_aeropuerto) %>% 
+  summarise(vuelos = sum(vuelos)) %>% 
+  ungroup()
+
+data_origen %>% 
+  arrange(desc(vuelos)) %>% 
+  gt::gt()
+```
+
+```{r}
+#Levanto listado de aeropuertos del SINTA
+aeropuertos <- read_csv("http://datos.yvera.gob.ar/dataset/c0e7bc3d-553c-405c-8b32-79282b28ffd5/resource/d406a6fa-c209-4b15-b648-6bcceb1d040c/download/aeropuertos.csv")
+
+#Junto tablas
+data_aero <- data_origen %>%
+  mutate(origen_aeropuerto = ifelse(
+    origen_aeropuerto == "Vcom. Angel De La Paz Aragonés",
+    "Aeropuerto Vcom. Angel De La Paz Aragonés",
+    origen_aeropuerto)) %>% #modifico valor para join
+  left_join(aeropuertos, 
+            by = c("origen_aeropuerto"="aeropuerto_etiqueta_anac"))
+
+
+#qué falta?
+#colnames(data_aero)
+```
+
+
+```{r}
+data_aero <- data_aero %>% 
+    st_as_sf(coords = c("longitud", "latitud"), crs = 4326)
+
+#class(data_aero)
+
+#Cargamos capa base de Argentina
+###Opción IGN
+#capa_arg <- read_sf("provincia.json") #tiene AIAS
+
+###Opción geoAr 
+# install.packages('geoAr')
+# install.packages('devtools') si no tiene instalado devtools
+# devtools::install_github("politicaargentina/geoAr")
+
+capa_arg <- geoAr::get_geo("ARGENTINA", "provincia")
+```
+
+<br>
+
+```{r}
+#Mapa con capas
+ggplot() +
+  geom_sf(data = capa_arg, fill = "white", color = "grey") + #capa Argentina
+  geom_sf(data = data_aero, color = "purple", alpha = 0.5,
+          aes(size = vuelos)) + #capa aeropuertos
+  labs(title = "Vuelos a Salta por aeropuerto de origen",
+       subtitle = "Julio 2023",
+       size = "") +
+  theme_void()
+```
+
+
+
+
+```{r include=FALSE}
+###Bonus
+#Agregar AIAS: paquete polArViz
+
+#Opción paquete
+
+#Guardamos mapa en un objeto
+mapa <- ggplot() +
+  geom_sf(data = capa_arg, fill = "white", color = "grey") + #capa Argentina
+  geom_sf(data = data_aero, color = "purple", alpha = 0.5,
+          aes(size = vuelos)) + #capa aeropuertos
+  labs(title = "Vuelos a Salta por aeropuerto de origen",
+       subtitle = "Julio 2023",
+       size = "") +
+  theme_void() +
+  theme(legend.position = "left")
+
+#Graficamos
+polArViz::inset_antartida(mapa)
+
+#Opción imagen: paquete cowplot
+cowplot::ggdraw() +
+    cowplot::draw_plot(mapa) +
+    cowplot::draw_image("https://mapoteca.educ.ar/.files/wp-content/mapas/antartida-argentina/politico-mudo/download/antartida-argentina_politico-mudo.jpg?dl", x = 0.3, y = -0.3, scale = 0.3)
+
 ```
 
