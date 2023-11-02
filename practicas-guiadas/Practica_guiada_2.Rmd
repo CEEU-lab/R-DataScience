@@ -37,11 +37,14 @@ En el presente reporte se exponen algunos indicadores referidos al mercado aeroc
 
 #Convierto columna a date y genero columnas de mes y año
 data <- data %>% 
-  mutate(indice_tiempo = as.Date(indice_tiempo),
+  mutate(indice_tiempo = as.Date(indice_tiempo), #variables de fecha
          mes = month(indice_tiempo, label = T, abbr = F),
          anio = year(indice_tiempo),
          fecha_mes = make_date(anio, mes)) %>% 
-  filter(anio == 2023) #filtro año 2023
+  filter(clasificacion_vuelo == "Cabotaje", #filtros
+         clase_vuelo == "Regular",
+         destino_provincia == "Salta",
+         anio == 2023)
 
 #class(data$indice_tiempo)
 #class(data$fecha_mes)
@@ -52,9 +55,6 @@ El mes del año 2023 que presentó mayor cantidad de pasajeros fue junio.
 ```{r}
 #Creo tabla mensual
 data_mensual <- data %>%
-  filter(clasificacion_vuelo == "Cabotaje",
-         clase_vuelo == "Regular",
-         destino_provincia == "Salta") %>% 
   group_by(fecha_mes) %>% 
   summarise(pasajeros = sum(pasajeros)) %>% 
   ungroup()
@@ -83,9 +83,6 @@ ggplot(data_mensual, aes(fecha_mes, pasajeros)) +
 ```{r}
 #Creo tabla diaria
 data_diaria <- data %>%
-  filter(clasificacion_vuelo == "Cabotaje",
-         clase_vuelo == "Regular",
-         destino_provincia == "Salta") %>% 
   filter(mes == "julio") %>% #filtro mes actual
   group_by(indice_tiempo) %>% #agrupo por día
   summarise(pasajeros = sum(pasajeros),
@@ -117,7 +114,7 @@ ggplot(data_pivot, aes(indice_tiempo, valor, color = indicador)) +
        y = "",
        caption = "Fuente: SINTA en base a datos de ANAC",
        color = "") + #defino labs
-  theme_minimal() +
+  theme_minimal() + #ajusto tema
   theme(legend.position = "bottom")
 ```
 
@@ -126,21 +123,21 @@ ggplot(data_pivot, aes(indice_tiempo, valor, color = indicador)) +
 Origen de los vuelos con destino al **Aeropuerto Int. Martín Miguel de Güemes**.
 
 ```{r}
+#Armo tabla con vuelos por origen
 data_origen <- data %>%
-  filter(clasificacion_vuelo == "Cabotaje",
-         clase_vuelo == "Regular",
-         destino_provincia == "Salta",
-         mes == "julio") %>% 
+  filter(mes == "julio") %>% 
   group_by(origen_provincia, origen_aeropuerto) %>% 
   summarise(vuelos = sum(vuelos)) %>% 
   ungroup()
 
+#Muestro tabla formateada
 data_origen %>% 
   arrange(desc(vuelos)) %>% 
   gt::gt()
 ```
 
 ```{r}
+#Mostramos información en un mapa
 #Levanto listado de aeropuertos del SINTA
 aeropuertos <- read_csv("http://datos.yvera.gob.ar/dataset/c0e7bc3d-553c-405c-8b32-79282b28ffd5/resource/d406a6fa-c209-4b15-b648-6bcceb1d040c/download/aeropuertos.csv")
 
@@ -159,7 +156,11 @@ data_aero <- data_origen %>%
 ```
 
 
+
+
 ```{r}
+
+#pasamos a objeto geo
 data_aero <- data_aero %>% 
     st_as_sf(coords = c("longitud", "latitud"), crs = 4326)
 
@@ -194,7 +195,7 @@ ggplot() +
 
 
 
-```{r include=FALSE}
+```{r include=FALSE, eval=FALSE}
 #Agregar AIAS 
 
 #Opción paquete polArViz
