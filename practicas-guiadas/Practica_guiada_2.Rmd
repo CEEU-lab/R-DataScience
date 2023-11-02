@@ -195,10 +195,11 @@ ggplot() +
 
 
 ```{r include=FALSE}
-###Bonus
-#Agregar AIAS: paquete polArViz
+#Agregar AIAS 
 
-#Opción paquete
+#Opción paquete polArViz
+#devtools::install_github("politicaArgentina/polArViz")
+
 
 #Guardamos mapa en un objeto
 mapa <- ggplot() +
@@ -215,9 +216,11 @@ mapa <- ggplot() +
 polArViz::inset_antartida(mapa)
 
 #Opción imagen: paquete cowplot
-cowplot::ggdraw() +
-    cowplot::draw_plot(mapa) +
-    cowplot::draw_image("https://mapoteca.educ.ar/.files/wp-content/mapas/antartida-argentina/politico-mudo/download/antartida-argentina_politico-mudo.jpg?dl", x = 0.3, y = -0.3, scale = 0.3)
+library(cowplot)
+
+ggdraw() +
+   draw_plot(mapa) +
+   draw_image("https://mapoteca.educ.ar/.files/wp-content/mapas/antartida-argentina/politico-mudo/download/antartida-argentina_politico-mudo.jpg?dl", x = 0.3, y = -0.3, scale = 0.3)
 
 ```
 
